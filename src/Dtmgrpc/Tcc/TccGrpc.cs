@@ -34,6 +34,8 @@ namespace Dtmgrpc
 
             await _dtmClient.RegisterBranch(this._transBase, branchId, bd, add, "");
 
+            // 这里的 url(grpc服务的地址)，dtm 校验不能以http开头，但是 Grpc.Net.Client 又要以http开头
+            // 决定统一用dtm的规定，不带http开头的！！在try操作的时候client这边自己补全
             await _dtmClient.InvokeBranch<TRequest, TResponse>(this._transBase, busiMsg, tryUrl, branchId, Try);
         }
 

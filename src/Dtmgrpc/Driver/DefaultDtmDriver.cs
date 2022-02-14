@@ -11,19 +11,19 @@
         {
             try
             {
-                var uri = new Uri(url);
+                if (url.Contains("://"))
+                {
+                    // http://localhost:5005/servicename/method
+                    return (string.Empty, string.Empty, string.Empty, $"bad url: {url}.");
+                }
+                else
+                {
+                    // localhost:5005/servicename/method
+                    var arr = url.Split('/');
+                    if (arr.Length < PathPartCount) return (string.Empty, string.Empty, string.Empty, $"bad url: {url}.");
+                    return (arr[0], arr[1], arr[2], "");
+                }
 
-                var host = uri.Host;
-                var port = uri.Port;
-                var scheme = uri.Scheme;
-                var path = uri.AbsolutePath;
-
-                // /servicename/method
-                var arr = path.Split('/');
-
-                if (arr.Length < PathPartCount) return (string.Empty, string.Empty, string.Empty, $"bad url: {url}.");
-
-                return ($"{scheme}://{host}:{port}", arr[1], arr[2], "");
             }
             catch (Exception ex)
             {

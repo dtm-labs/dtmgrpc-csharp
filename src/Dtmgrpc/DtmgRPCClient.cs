@@ -15,7 +15,7 @@ namespace Dtmgrpc
         private readonly Driver.IDtmDriver _dtmDriver;
 
         public DtmgRPCClient(Driver.IDtmDriver dtmDriver)
-        { 
+        {
             this._dtmDriver = dtmDriver;
         }
 
@@ -42,7 +42,13 @@ namespace Dtmgrpc
         {
             var (server, serviceName, method, err) = _dtmDriver.ParseServerMethod(url);
 
-            if(!string.IsNullOrWhiteSpace(err)) throw new Exception(err);
+            if (!string.IsNullOrWhiteSpace(err)) throw new Exception(err);
+
+            // TODO: 需要支持 不以http开头，但是是 https 的
+            if (!server.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                server = $"http://{server}";
+            }
 
             using var channel = GrpcChannel.ForAddress(server);
             var grpcMethod = Utils.CreateMethod<TRequest, TResponse>(MethodType.Unary, serviceName, method);
@@ -95,20 +101,27 @@ namespace Dtmgrpc
                 RetryInterval = transBase.RetryInterval,
             };
 
-            transOptions.BranchHeaders.Add(transBase.BranchHeaders);
-            transOptions.PassthroughHeaders.Add(transBase.PassthroughHeaders);
+            if (transBase.BranchHeaders != null)
+            {
+                transOptions.BranchHeaders.Add(transBase.BranchHeaders);
+            }
+
+            if (transBase.PassthroughHeaders != null)
+            {
+                transOptions.PassthroughHeaders.Add(transBase.PassthroughHeaders);
+            }
 
             var dtmRequest = new dtmgpb.DtmRequest
             {
                 Gid = transBase.Gid,
                 TransType = transBase.TransType,
                 TransOptions = transOptions,
-                QueryPrepared = transBase.QueryPrepared,
-                CustomedData = transBase.CustomData,
-                Steps = Utils.ToJsonString(transBase.Steps),
+                QueryPrepared = transBase.QueryPrepared ?? string.Empty,
+                CustomedData = transBase.CustomData ?? string.Empty,
+                Steps = transBase.Steps == null ? string.Empty : Utils.ToJsonString(transBase.Steps),
             };
 
-            foreach (var item in transBase.BinPayloads)
+            foreach (var item in transBase.BinPayloads ?? new List<byte[]>())
             {
                 dtmRequest.BinPayloads.Add(ByteString.CopyFrom(item));
             }
