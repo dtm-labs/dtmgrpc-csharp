@@ -1,4 +1,6 @@
-﻿namespace Dtmgrpc.DtmGImp
+﻿using System;
+
+namespace Dtmgrpc.DtmGImp
 {
     public class BranchIDGen
     {

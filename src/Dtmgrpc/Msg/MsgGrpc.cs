@@ -1,5 +1,11 @@
 ﻿using Dtmgrpc.DtmGImp;
 using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
+using System;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Dtmgrpc
 {
@@ -9,10 +15,12 @@ namespace Dtmgrpc
 
         private readonly TransBase _transBase;
         private readonly IDtmgRPCClient _dtmClient;
+        private readonly IBranchBarrierFactory _branchBarrierFactory;
 
-        public MsgGrpc(IDtmgRPCClient dtmHttpClient, string server, string gid)
+        public MsgGrpc(IDtmgRPCClient dtmHttpClient, IBranchBarrierFactory branchBarrierFactory, string server, string gid)
         {
             this._dtmClient = dtmHttpClient;
+            this._branchBarrierFactory = branchBarrierFactory;
             this._transBase = TransBase.NewTransBase(gid, Constant.TYPE_MSG, server, string.Empty);
         }
 
@@ -36,6 +44,61 @@ namespace Dtmgrpc
         public async Task Submit(CancellationToken cancellationToken = default)
         {
             await this._dtmClient.DtmGrpcCall(this._transBase, Constant.Op.Submit);
+        }
+
+        public async Task<bool> DoAndSubmitDB(string queryPrepared, DbConnection db, Func<DbTransaction, Task> busiCall, CancellationToken cancellationToken = default)
+        {
+            return await this.DoAndSubmit(queryPrepared, async bb =>
+            {
+                await bb.Call(db, busiCall);
+            }, cancellationToken);
+        }
+
+        public async Task<bool> DoAndSubmit(string queryPrepared, Func<BranchBarrier, Task> busiCall, CancellationToken cancellationToken = default)
+        {
+
+            var bb = _branchBarrierFactory.CreateBranchBarrier(this._transBase.TransType, this._transBase.Gid, Constant.Barrier.MSG_BRANCHID, Constant.TYPE_MSG);
+
+            if (bb.IsInValid()) throw new DtmcliException($"invalid trans info: {bb.ToString()}");
+
+            await this.Prepare(queryPrepared, cancellationToken);
+
+            Exception errb = null;
+
+            try
+            {
+                await busiCall.Invoke(bb);
+            }
+            catch (Exception ex)
+            {
+                errb = ex;
+            }
+
+            Exception err = null;
+            if (errb != null && !errb.Message.Contains(Constant.ResultFailure))
+            {
+                try
+                {
+                    await _dtmClient.InvokeBranch<Empty, Empty>(_transBase, new Empty(), queryPrepared, bb.BranchID, bb.Op);
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+            }
+
+            if ((errb != null && errb.Message.Equals(Constant.ResultFailure)) || (err != null && err.Message.Equals(Constant.ResultFailure)))
+            {
+                await _dtmClient.DtmGrpcCall(this._transBase, Constant.Op.Abort);
+            }
+            else if (err == null)
+            {
+                await this.Submit(cancellationToken);
+            }
+
+            if (errb != null) return false;
+
+            return true;
         }
 
         /// <summary>

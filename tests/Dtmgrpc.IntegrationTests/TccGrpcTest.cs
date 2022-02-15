@@ -36,7 +36,6 @@ namespace Dtmgrpc.IntegrationTests
             });
 
             Assert.Equal(gid, res);
-
         }
     }
 }

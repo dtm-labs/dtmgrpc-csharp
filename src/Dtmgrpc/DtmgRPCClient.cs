@@ -3,6 +3,9 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Grpc.Net.Client;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Dtmgrpc
 {
@@ -42,7 +45,7 @@ namespace Dtmgrpc
         {
             var (server, serviceName, method, err) = _dtmDriver.ParseServerMethod(url);
 
-            if (!string.IsNullOrWhiteSpace(err)) throw new Exception(err);
+            if (!string.IsNullOrWhiteSpace(err)) throw new DtmcliException(err);
 
             // TODO: 需要支持 不以http开头，但是是 https 的
             if (!server.StartsWith("http", StringComparison.OrdinalIgnoreCase))
@@ -80,16 +83,7 @@ namespace Dtmgrpc
 
         public TransBase TransBaseFromGrpc(ServerCallContext context)
         {
-            var gid = Utils.DtmGet(context, Constant.Md.Gid);
-            var transType = Utils.DtmGet(context, Constant.Md.TransType);
-            var dtm = Utils.DtmGet(context, Constant.Md.Dtm);
-            var branchId = Utils.DtmGet(context, Constant.Md.BranchId);
-            var op = Utils.DtmGet(context, Constant.Md.Op);
-
-            var tb = TransBase.NewTransBase(gid, transType, dtm, branchId);
-            tb.Op = op;
-
-            return tb;
+            return Utils.TransBaseFromGrpc(context);
         }
 
         private dtmgpb.DtmRequest BuildDtmRequest(TransBase transBase)

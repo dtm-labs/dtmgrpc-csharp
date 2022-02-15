@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf;
 using Grpc.Core;
+using System.Linq;
 
 namespace Dtmgrpc.DtmGImp
 {
@@ -10,11 +11,25 @@ namespace Dtmgrpc.DtmGImp
             return System.Text.Json.JsonSerializer.Serialize(obj);
         }
 
+        internal static TransBase TransBaseFromGrpc(ServerCallContext context)
+        {
+            var gid = DtmGet(context, Constant.Md.Gid);
+            var transType = DtmGet(context, Constant.Md.TransType);
+            var dtm = DtmGet(context, Constant.Md.Dtm);
+            var branchId = DtmGet(context, Constant.Md.BranchId);
+            var op = DtmGet(context, Constant.Md.Op);
+
+            var tb = TransBase.NewTransBase(gid, transType, dtm, branchId);
+            tb.Op = op;
+
+            return tb;
+        }
+
         internal static string DtmGet(ServerCallContext context, string key)
         {
-            var metadataEntry = context.RequestHeaders.FirstOrDefault(m => m.Key.Equals(key));
+            var metadataEntry = context.RequestHeaders?.FirstOrDefault(m => m.Key.Equals(key)) ?? default;
 
-            if (metadataEntry.Equals(default(Metadata.Entry)) || metadataEntry.Value == null)
+            if (metadataEntry == null || metadataEntry.Equals(default(Metadata.Entry)) || metadataEntry.Value == null)
             {
                 return null;
             }

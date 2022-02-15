@@ -1,5 +1,7 @@
 ﻿using Dtmgrpc.DtmGImp;
 using Google.Protobuf;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Dtmgrpc
 {

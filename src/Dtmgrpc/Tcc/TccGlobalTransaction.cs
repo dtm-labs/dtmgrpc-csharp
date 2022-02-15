@@ -1,5 +1,8 @@
 ﻿using Dtmgrpc.DtmGImp;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Dtmgrpc
 {
@@ -27,20 +30,18 @@ namespace Dtmgrpc
             try
             {
                 await _dtmClient.DtmGrpcCall(tcc.GetTransBase(), Constant.Op.Prepare);
-                //logger.LogDebug("prepare result gid={gid}, res={res}", gid, prepare);
 
                 await tcc_cb(tcc);
 
                 await _dtmClient.DtmGrpcCall(tcc.GetTransBase(), Constant.Op.Submit);
-                //logger.LogDebug("submit result gid={gid}, res={res}", gid, submit);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "submitting or abort global transaction error");
                 await _dtmClient.DtmGrpcCall(tcc.GetTransBase(), Constant.Op.Abort);
-                //logger.LogDebug("abort result gid={gid}, res={res}", gid, abort);
                 return string.Empty;
             }
+
             return gid;
         }
     }

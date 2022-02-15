@@ -1,4 +1,5 @@
 ﻿using Dtmgrpc.Driver;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Dtmgrpc.Tests.Driver
@@ -36,6 +37,24 @@ namespace Dtmgrpc.Tests.Driver
             Assert.Empty(serviceName);
             Assert.Empty(method);
             Assert.NotEmpty(error);
+        }
+
+        [Fact]
+        public void AddDtmGrpc_Should_Get_Default_Driver()
+        {
+            var dtm = "http://localhost:36790";
+            var services = new ServiceCollection();
+            services.AddLogging();
+            services.AddDtmGrpc(x =>
+            {
+                x.DtmGrpcUrl = dtm;
+            });
+
+            var provider = services.BuildServiceProvider();
+
+            var driver = provider.GetRequiredService<IDtmDriver>();
+
+            Assert.IsType<DefaultDtmDriver>(driver);
         }
     }
 }

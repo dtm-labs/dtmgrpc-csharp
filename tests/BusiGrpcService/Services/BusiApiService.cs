@@ -66,5 +66,15 @@ namespace BusiGrpcService.Services
             await Task.CompletedTask;
             return new Empty();
         }
+
+        public override async Task<BusiReply> QueryPrepared(BusiReq request, ServerCallContext context)
+        {
+            var tb = _client.TransBaseFromGrpc(context);
+
+            _logger.LogInformation("TransOutRevert tb={tb}, req={req}", JsonSerializer.Serialize(tb), JsonSerializer.Serialize(request));
+
+            await Task.CompletedTask;
+            return new BusiReply {  Message = "a sample data" };
+        }
     }   
 }

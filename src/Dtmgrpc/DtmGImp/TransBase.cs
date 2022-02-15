@@ -1,4 +1,6 @@
-﻿namespace Dtmgrpc.DtmGImp
+﻿using System.Collections.Generic;
+
+namespace Dtmgrpc.DtmGImp
 {
     public class TransBase
     {

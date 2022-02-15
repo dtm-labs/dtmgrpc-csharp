@@ -1,4 +1,6 @@
-﻿namespace Dtmgrpc.Driver
+﻿using System;
+
+namespace Dtmgrpc.Driver
 {
     public class DefaultDtmDriver : IDtmDriver
     {
