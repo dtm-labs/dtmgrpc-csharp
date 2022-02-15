@@ -31,6 +31,7 @@ jobs:
       run: |
         wget https://github.com/dtm-labs/dtm/releases/download/v1.12.1/dtm_1.12.1_linux_amd64.tar.gz
         tar -xvf dtm_1.12.1_linux_amd64.tar.gz
+        pwd
         nohup ./dtm > dtm.log 2>&1 &
         sleep 5
         curl "127.0.0.1:36789/api/dtmsvr/newGid"   
@@ -43,3 +44,10 @@ jobs:
     - name: Run Integration Tests
       run: |
         dotnet test tests/Dtmgrpc.IntegrationTests/Dtmgrpc.IntegrationTests.csproj
+
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: dtm-logs
+        path: /home/runner/work/dtmgrpc-csharp/dtmgrpc-csharp/dtm.log    
