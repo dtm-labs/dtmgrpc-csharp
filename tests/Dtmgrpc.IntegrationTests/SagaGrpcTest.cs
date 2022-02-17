@@ -10,30 +10,56 @@ namespace Dtmgrpc.IntegrationTests
         [Fact]
         public async Task Submit_Should_Succeed()
         {
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            var dtm = "http://localhost:36790";
-            var services = new ServiceCollection();
-            services.AddLogging();
-            services.AddDtmGrpc(x =>
-            {
-                x.DtmGrpcUrl = dtm;
-            });
-
-            var provider = services.BuildServiceProvider();
-
+            var provider = ITTestHelper.AddDtmGrpc();
             var transFactory = provider.GetRequiredService<IDtmTransFactory>();
 
             var gid = "sagaTestGid" + Guid.NewGuid().ToString();
-
-            var saga = transFactory.NewSagaGrpc(gid);
-            var req = new busi.BusiReq { Amount = 30, TransInResult = "", TransOutResult = "" };
-            var busiGrpc = "localhost:5005";
-
-            saga.Add(busiGrpc + "/busi.Busi/TransOut", busiGrpc + "/busi.Busi/TransOutRevert", req);
-            saga.Add(busiGrpc + "/busi.Busi/TransIn", busiGrpc + "/busi.Busi/TransInRevert", req);
+            var saga = GenSagaGrpc(transFactory, gid, false, false);
             await saga.Submit();
 
-            Assert.True(true);
+            await Task.Delay(2000);
+            var status = await ITTestHelper.GetTranStatus(gid);
+            Assert.Equal("succeed", status);
+        }
+
+        [Fact]
+        public async Task Rollback_Should_Succeed()
+        {
+            var provider = ITTestHelper.AddDtmGrpc();
+            var transFactory = provider.GetRequiredService<IDtmTransFactory>();
+
+            var gid = "sagaTestGid" + Guid.NewGuid().ToString();
+            var saga = GenSagaGrpc(transFactory, gid, false, true);
+            await saga.Submit();
+
+            await Task.Delay(2000);
+            var status = await ITTestHelper.GetTranStatus(gid);
+            Assert.Equal("failed", status);
+        }
+
+        [Fact]
+        public async Task WaitResult_Should_Succeed()
+        {
+            var provider = ITTestHelper.AddDtmGrpc();
+            var transFactory = provider.GetRequiredService<IDtmTransFactory>();
+
+            var gid = "sagaTestGid" + Guid.NewGuid().ToString();
+            var saga = GenSagaGrpc(transFactory, gid, false, false);
+            saga.EnableWaitResult();
+            await saga.Submit();
+            
+            var status = await ITTestHelper.GetTranStatus(gid);
+            Assert.Equal("succeed", status);
+        }
+
+        private SagaGrpc GenSagaGrpc(IDtmTransFactory transFactory, string gid, bool outFailed, bool inFailed)
+        {
+            var saga = transFactory.NewSagaGrpc(gid);
+            var req = ITTestHelper.GenBusiReq(outFailed, inFailed);
+            var busiGrpc = ITTestHelper.BuisgRPCUrl;
+            saga.Add(busiGrpc + "/busi.Busi/TransOut", busiGrpc + "/busi.Busi/TransOutRevert", req);
+            saga.Add(busiGrpc + "/busi.Busi/TransIn", busiGrpc + "/busi.Busi/TransInRevert", req);
+            return saga;
         }
     }
 }

@@ -67,7 +67,7 @@ namespace Dtmgrpc.Tests
 
             Assert.IsType<DtmGImp.SqlServerDBSpecial>(special);
             Assert.Equal("insert into a(f) values(@f)", special.GetInsertIgnoreTemplate("a(f) values(@f)", "c"));
-            Assert.Throws<DtmcliException>(() => special.GetXaSQL("", ""));
+            Assert.Throws<DtmException>(() => special.GetXaSQL("", ""));
         }
 
         [Fact]
@@ -84,7 +84,7 @@ namespace Dtmgrpc.Tests
 
             var provider = services.BuildServiceProvider();
 
-            var ex = Assert.Throws<DtmcliException>(()=> provider.GetRequiredService<DtmGImp.DbSpecialDelegate>());
+            var ex = Assert.Throws<DtmException>(()=> provider.GetRequiredService<DtmGImp.DbSpecialDelegate>());
             Assert.Equal("unknown db type 'other'", ex.Message);
         }
     }

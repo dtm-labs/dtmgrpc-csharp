@@ -14,6 +14,8 @@ namespace Dtmgrpc
         private static readonly Marshaller<dtmgpb.DtmRequest> DtmRequestMarshaller = Marshallers.Create(r => r.ToByteArray(), data => dtmgpb.DtmRequest.Parser.ParseFrom(data));
         private static readonly Marshaller<Empty> DtmReplyMarshaller = Marshallers.Create(r => r.ToByteArray(), data => Empty.Parser.ParseFrom(data));
         private static readonly string DtmServiceName = "dtmgimp.Dtm";
+        private static readonly string HTTP = "http";
+        private static readonly string HTTPPrefix = "http://";
 
         private readonly Driver.IDtmDriver _dtmDriver;
 
@@ -45,12 +47,11 @@ namespace Dtmgrpc
         {
             var (server, serviceName, method, err) = _dtmDriver.ParseServerMethod(url);
 
-            if (!string.IsNullOrWhiteSpace(err)) throw new DtmcliException(err);
+            if (!string.IsNullOrWhiteSpace(err)) throw new DtmException(err);
 
-            // TODO: 需要支持 不以http开头，但是是 https 的
-            if (!server.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            if (!server.StartsWith(HTTP, StringComparison.OrdinalIgnoreCase))
             {
-                server = $"http://{server}";
+                server = $"{HTTPPrefix}{server}";
             }
 
             using var channel = GrpcChannel.ForAddress(server);

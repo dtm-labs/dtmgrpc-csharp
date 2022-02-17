@@ -10,31 +10,22 @@ namespace Dtmgrpc.IntegrationTests
         [Fact]
         public async Task Submit_Should_Succeed()
         {
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            var dtm = "http://localhost:36790";
-            var services = new ServiceCollection();
-            services.AddLogging();
-            services.AddDtmGrpc(x =>
-            {
-                x.DtmGrpcUrl = dtm;
-            });
-
-            var provider = services.BuildServiceProvider();
-
+            var provider = ITTestHelper.AddDtmGrpc();
             var transFactory = provider.GetRequiredService<IDtmTransFactory>();
 
             var gid = "msgTestGid" + Guid.NewGuid().ToString();
-
             var msg = transFactory.NewMsgGrpc(gid);
-            var req = new busi.BusiReq { Amount = 30, TransInResult = "", TransOutResult = "" };
-            var busiGrpc = "localhost:5005";
+            var req = ITTestHelper.GenBusiReq(false, false);
+            var busiGrpc = ITTestHelper.BuisgRPCUrl;
             msg.Add(busiGrpc + "/busi.Busi/TransOut", req)
                .Add(busiGrpc + "/busi.Busi/TransIn", req);
 
             await msg.Prepare(busiGrpc + "/busi.Busi/QueryPrepared");
             await msg.Submit();
 
-            Assert.True(true);
+            await Task.Delay(2000);
+            var status = await ITTestHelper.GetTranStatus(gid);
+            Assert.Equal("succeed", status);
         }
     }
 }

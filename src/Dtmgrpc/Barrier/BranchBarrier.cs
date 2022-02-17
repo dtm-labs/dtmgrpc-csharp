@@ -71,9 +71,7 @@ namespace Dtmgrpc
                 Logger?.LogDebug("originAffected: {originAffected} currentAffected: {currentAffected}", originAffected, currentAffected);
 
                 if (IsMsgRejected(rErr, this.Op, currentAffected))
-                {
-                    throw new DtmcliException(Constant.ResultDuplicated);
-                }
+                    throw new DtmDuplicatedException();
 
                 var isNullCompensation = IsNullCompensation(this.Op, originAffected);
                 var isDuplicateOrPend = IsDuplicateOrPend(currentAffected);
@@ -96,7 +94,8 @@ namespace Dtmgrpc
                 }
                 catch (Exception ex)
                 {
-                    throw new DtmcliException(ex.Message);
+                    if (ex is DtmException) throw;
+                    else throw new DtmException(ex.Message);
                 }
 
 #if NETSTANDARD2_0

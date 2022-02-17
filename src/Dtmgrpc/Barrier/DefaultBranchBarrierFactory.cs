@@ -23,7 +23,7 @@ namespace Dtmgrpc
 
             var ti = new BranchBarrier(transType, gid, branchID, op, _options, _dbUtils, logger);
 
-            if (ti.IsInValid()) throw new DtmcliException($"invalid trans info: {ti.ToString()}");
+            if (ti.IsInValid()) throw new DtmException($"invalid trans info: {ti.ToString()}");
 
             return ti;
         }
@@ -36,7 +36,7 @@ namespace Dtmgrpc
 
             var ti = new BranchBarrier(tb.TransType, tb.Gid, tb.BranchIDGen.BranchID, tb.Op, _options, _dbUtils, logger);
 
-            if (ti.IsInValid()) throw new DtmcliException($"invalid trans info: {ti.ToString()}");
+            if (ti.IsInValid()) throw new DtmException($"invalid trans info: {ti.ToString()}");
 
             return ti;
         }

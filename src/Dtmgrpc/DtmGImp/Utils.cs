@@ -1,10 +1,11 @@
 ﻿using Google.Protobuf;
 using Grpc.Core;
+using System;
 using System.Linq;
 
 namespace Dtmgrpc.DtmGImp
 {
-    internal class Utils
+    public static class Utils
     {
         internal static string ToJsonString(object obj)
         { 
@@ -72,6 +73,55 @@ namespace Dtmgrpc.DtmGImp
                     m.MergeFrom(d);
                     return m;
                 });
+        }
+
+        private static readonly System.Collections.Generic.Dictionary<string, Exception> StrExceptions = new System.Collections.Generic.Dictionary<string, Exception>
+        {
+            { Constant.ResultFailure, new DtmFailureException() },
+            { Constant.ResultOngoing, new DtmOngingException() },
+            { Constant.ResultSuccess, null },
+            { string.Empty, null },
+        };
+
+        public static Exception String2DtmError(string str)
+        {
+            return StrExceptions.TryGetValue(str, out var exception) ? exception : null;
+        }
+
+        public static Exception GrpcError2DtmError(Exception ex)
+        {
+            if (ex is RpcException rpcEx)
+            {
+                if (rpcEx.StatusCode == StatusCode.Aborted)
+                {
+                    if (rpcEx.Message.Equals(Constant.ResultOngoing))
+                    {
+                        return new DtmOngingException();
+                    }
+
+                    return new DtmFailureException();
+                }
+                else if (rpcEx.StatusCode == StatusCode.FailedPrecondition)
+                {
+                    return new DtmOngingException();
+                }
+            }
+
+            return ex;
+        }
+
+        public static RpcException DtmError2GrpcError(Exception ex)
+        {
+            if (ex is DtmFailureException)
+            {
+                throw new RpcException(new Status(StatusCode.Aborted, Constant.ResultFailure));
+            }
+            else if (ex is DtmOngingException)
+            {
+                throw new RpcException(new Status(StatusCode.FailedPrecondition, Constant.ResultOngoing));
+            }
+
+            throw new RpcException(new Status(StatusCode.Unknown, "normal exception"), ex.Message);
         }
     }
 }

@@ -11,31 +11,45 @@ namespace Dtmgrpc.IntegrationTests
         [Fact]
         public async Task Execute_Should_Succeed()
         {
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            var dtm = "http://localhost:36790";
-            var services = new ServiceCollection();
-            services.AddLogging();
-            services.AddDtmGrpc(x => 
-            {
-                x.DtmGrpcUrl = dtm;
-            });
-
-            var provider = services.BuildServiceProvider();
-
+            var provider = ITTestHelper.AddDtmGrpc();
             var globalTransaction = provider.GetRequiredService<TccGlobalTransaction>();
-
+            
             var gid = "tccTestGid" + Guid.NewGuid().ToString();
-
-            var req = new busi.BusiReq { Amount = 30, TransInResult = "", TransOutResult = "" };
-            var busiGrpc = "localhost:5005";
-            var res = await globalTransaction.Excecute(dtm, gid, async tcc =>
+            var req = ITTestHelper.GenBusiReq(false, false);
+            var busiGrpc = ITTestHelper.BuisgRPCUrl;
+            var res = await globalTransaction.Excecute(ITTestHelper.DTMgRPCUrl, gid, async tcc =>
             {
                 await tcc.CallBranch<busi.BusiReq, Empty>(req, busiGrpc + "/busi.Busi/TransOut", busiGrpc + "/busi.Busi/TransOutConfirm", busiGrpc + "/busi.Busi/TransOutRevert");
                 await tcc.CallBranch<busi.BusiReq, Empty>(req, busiGrpc + "/busi.Busi/TransIn", busiGrpc + "/busi.Busi/TransInConfirm", busiGrpc + "/busi.Busi/TransInRevert");
-                await Task.CompletedTask;
             });
 
             Assert.Equal(gid, res);
+
+            await Task.Delay(2000);
+            var status = await ITTestHelper.GetTranStatus(gid);
+            Assert.Equal("succeed", status);
+        }
+
+        [Fact]
+        public async Task Rollback_Should_Succeed()
+        {
+            var provider = ITTestHelper.AddDtmGrpc();
+            var globalTransaction = provider.GetRequiredService<TccGlobalTransaction>();
+
+            var gid = "tccTestGid" + Guid.NewGuid().ToString();
+            var req = ITTestHelper.GenBusiReq(false, true);
+            var busiGrpc = ITTestHelper.BuisgRPCUrl;
+            var res = await globalTransaction.Excecute(ITTestHelper.DTMgRPCUrl, gid, async tcc =>
+            {
+                await tcc.CallBranch<busi.BusiReq, Empty>(req, busiGrpc + "/busi.Busi/TransOutTcc", busiGrpc + "/busi.Busi/TransOutConfirm", busiGrpc + "/busi.Busi/TransOutRevert");
+                await tcc.CallBranch<busi.BusiReq, Empty>(req, busiGrpc + "/busi.Busi/TransInTcc", busiGrpc + "/busi.Busi/TransInConfirm", busiGrpc + "/busi.Busi/TransInRevert");
+            });
+
+            Assert.Empty(res);
+
+            await Task.Delay(2000);
+            var status = await ITTestHelper.GetTranStatus(gid);
+            Assert.Equal("failed", status);
         }
     }
 }

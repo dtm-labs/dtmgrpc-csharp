@@ -77,7 +77,7 @@ namespace Dtmgrpc.Tests
 
             var db = new MockDbConnection();
 
-            await Assert.ThrowsAsync<DtmcliException>(async () => await msg.DoAndSubmitDB(busi + "/query", db, x => Task.CompletedTask));
+            await Assert.ThrowsAsync<DtmException>(async () => await msg.DoAndSubmitDB(busi + "/query", db, x => Task.CompletedTask));
         }
 
         [Fact]
@@ -145,7 +145,7 @@ namespace Dtmgrpc.Tests
             db.Mocks.When(x => x.CommandText.Contains("select", StringComparison.OrdinalIgnoreCase)).ReturnsScalar(cmd => "rollback");
 
             var mockBusiCall = new Mock<Func<DbTransaction, Task>>();
-            mockBusiCall.Setup(x => x.Invoke(It.IsAny<DbTransaction>())).Throws(new Exception(Constant.ResultFailure));
+            mockBusiCall.Setup(x => x.Invoke(It.IsAny<DbTransaction>())).Throws(new DtmFailureException());
 
             var res = await msg.DoAndSubmitDB(busi + "/query", db, mockBusiCall.Object);
 

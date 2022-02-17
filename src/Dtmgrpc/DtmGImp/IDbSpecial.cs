@@ -103,7 +103,7 @@ GO
             => sql;
 
         public string GetXaSQL(string command, string xid)
-            => throw new DtmcliException("not support xa now!");
+            => throw new DtmException("not support xa now!");
     }
 
     public class DbSpecialDelegate
@@ -114,7 +114,7 @@ GO
         {
             var dbSpecial = specials.FirstOrDefault(x => x.Name.Equals(optionsAccs.Value.DBType));
 
-            if (dbSpecial == null) throw new DtmcliException($"unknown db type '{optionsAccs.Value.DBType}'");
+            if (dbSpecial == null) throw new DtmException($"unknown db type '{optionsAccs.Value.DBType}'");
 
             _special = dbSpecial;
         }

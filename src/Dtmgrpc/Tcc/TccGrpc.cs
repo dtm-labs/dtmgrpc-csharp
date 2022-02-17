@@ -21,6 +21,17 @@ namespace Dtmgrpc
             this._transBase = transBase;
         }
 
+        /// <summary>
+        /// Call TCC branch
+        /// </summary>
+        /// <typeparam name="TRequest">gRPC request</typeparam>
+        /// <typeparam name="TResponse">gRPC response</typeparam>
+        /// <param name="busiMsg">gRPC request</param>
+        /// <param name="tryUrl">try url, don't contain http</param>
+        /// <param name="confirmUrl">confirm url, don't contain http</param>
+        /// <param name="cancelUrl">cancel url, don't contain http</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task CallBranch<TRequest, TResponse>(TRequest busiMsg, string tryUrl, string confirmUrl, string cancelUrl, CancellationToken cancellationToken = default)
             where TRequest : class, IMessage, new()
             where TResponse : class, IMessage, new()
@@ -37,8 +48,8 @@ namespace Dtmgrpc
 
             await _dtmClient.RegisterBranch(this._transBase, branchId, bd, add, "");
 
-            // 这里的 url(grpc服务的地址)，dtm 校验不能以http开头，但是 Grpc.Net.Client 又要以http开头
-            // 决定统一用dtm的规定，不带http开头的！！在try操作的时候client这边自己补全
+            // NOTE: DTM server vilida gRPC url that not start with http or https, but Grpc.Net.Client should start with
+            // Here will use the convention of DTM, when calling try, the client will add http.
             await _dtmClient.InvokeBranch<TRequest, TResponse>(this._transBase, busiMsg, tryUrl, branchId, Try);
         }
 

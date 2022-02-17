@@ -56,10 +56,9 @@ namespace Dtmgrpc
 
         public async Task<bool> DoAndSubmit(string queryPrepared, Func<BranchBarrier, Task> busiCall, CancellationToken cancellationToken = default)
         {
-
             var bb = _branchBarrierFactory.CreateBranchBarrier(this._transBase.TransType, this._transBase.Gid, Constant.Barrier.MSG_BRANCHID, Constant.TYPE_MSG);
 
-            if (bb.IsInValid()) throw new DtmcliException($"invalid trans info: {bb.ToString()}");
+            if (bb.IsInValid()) throw new DtmException($"invalid trans info: {bb.ToString()}");
 
             await this.Prepare(queryPrepared, cancellationToken);
 
@@ -75,19 +74,20 @@ namespace Dtmgrpc
             }
 
             Exception err = null;
-            if (errb != null && !errb.Message.Contains(Constant.ResultFailure))
+            if (errb != null && !(errb is DtmFailureException))
             {
                 try
                 {
+                    // call queryPrepared to get the result
                     await _dtmClient.InvokeBranch<Empty, Empty>(_transBase, new Empty(), queryPrepared, bb.BranchID, bb.Op);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    throw;
+                    err = Utils.GrpcError2DtmError(ex);
                 }
             }
 
-            if ((errb != null && errb.Message.Equals(Constant.ResultFailure)) || (err != null && err.Message.Equals(Constant.ResultFailure)))
+            if ((errb != null && errb is DtmFailureException) || (err != null && err is DtmFailureException))
             {
                 await _dtmClient.DtmGrpcCall(this._transBase, Constant.Op.Abort);
             }
