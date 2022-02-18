@@ -13,19 +13,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     services:
       mysql:
-        image: 'mysql:8'
-        env:
-          MYSQL_ROOT_PASSWORD: 123456
-        command:
-        [
-          '--character-set-server=utf8mb4',
-          '--collation-server=utf8mb4_unicode_ci',
-          '--default-authentication-plugin=mysql_native_password',
-        ]
-        volumes:
-          - /home/runner/work/dtmgrpc-csharp/dtmgrpc-csharp/sqls:/docker-entrypoint-initdb.d  
+        image: 'mysql:8.0'
         ports:
-          - 3306:3306
+          - 3306:3306  
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3 
+          -e MYSQL_ROOT_PASSWORD=123456
+          --entrypoint sh mysql:8.0 -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"    
     strategy:
       matrix:
         os: [ ubuntu-latest ]
@@ -42,19 +39,25 @@ jobs:
         dotnet --list-sdks
         dotnet --list-runtimes
 
+    - name: Create database
+      run: |
+        mysql -h127.0.0.1 -uroot -p123456 < /home/runner/work/dtmgrpc-csharp/dtmgrpc-csharp/sqls/barrier.mysql.sql
+        mysql -h127.0.0.1 -uroot -p123456 < /home/runner/work/dtmgrpc-csharp/dtmgrpc-csharp/sqls/busi.mysql.sql
+
     - name: Setup DTM server
       run: |
         wget https://github.com/dtm-labs/dtm/releases/download/v1.12.1/dtm_1.12.1_linux_amd64.tar.gz
         tar -xvf dtm_1.12.1_linux_amd64.tar.gz
         pwd
-        nohup ./dtm > dtm.log 2>&1 &
+        mkdir /home/runner/work/dtmgrpc-csharp/dtmgrpc-csharp/logs
+        nohup ./dtm > /home/runner/work/dtmgrpc-csharp/dtmgrpc-csharp/logs/dtm.log 2>&1 &
         sleep 5
         curl "127.0.0.1:36789/api/dtmsvr/newGid"   
 
     - name: Setup Busi Service
       run: |
         cd tests/BusiGrpcService
-        nohup dotnet run > app.log 2>&1 &
+        nohup dotnet run > /home/runner/work/dtmgrpc-csharp/dtmgrpc-csharp/logs/app.log 2>&1 &
 
     - name: Run Integration Tests
       run: |
@@ -65,4 +68,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: dtm-logs
-        path: /home/runner/work/dtmgrpc-csharp/dtmgrpc-csharp/dtm.log    
+        path: /home/runner/work/dtmgrpc-csharp/dtmgrpc-csharp/logs

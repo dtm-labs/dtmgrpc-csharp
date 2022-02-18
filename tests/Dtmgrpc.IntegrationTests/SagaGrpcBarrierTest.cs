@@ -17,7 +17,7 @@ namespace Dtmgrpc.IntegrationTests
             var saga = GenSagaGrpc(transFactory, gid, false, false);
             await saga.Submit();
 
-            await Task.Delay(2000);
+            await Task.Delay(10000);
             var status = await ITTestHelper.GetTranStatus(gid);
             Assert.Equal("succeed", status);
         }
@@ -32,7 +32,7 @@ namespace Dtmgrpc.IntegrationTests
             var saga = GenSagaGrpc(transFactory, gid, false, true);
             await saga.Submit();
 
-            await Task.Delay(4000);
+            await Task.Delay(10000);
             var status = await ITTestHelper.GetTranStatus(gid);
             Assert.Equal("failed", status);
         }
