@@ -1,7 +1,10 @@
 using busi;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using MySqlConnector;
 using System.Text.Json;
+using Dapper;
+using System.Data.Common;
 
 namespace BusiGrpcService.Services
 {
@@ -10,11 +13,13 @@ namespace BusiGrpcService.Services
 
         private readonly ILogger<BusiApiService> _logger;
         private readonly Dtmgrpc.IDtmgRPCClient _client;
+        private readonly Dtmgrpc.IBranchBarrierFactory _barrierFactory;
 
-        public BusiApiService(ILogger<BusiApiService> logger, Dtmgrpc.IDtmgRPCClient client)
+        public BusiApiService(ILogger<BusiApiService> logger, Dtmgrpc.IDtmgRPCClient client, Dtmgrpc.IBranchBarrierFactory barrierFactory)
         { 
             this._logger = logger;
             this._client = client;
+            this._barrierFactory = barrierFactory;
         }
 
         public override async Task<Empty> TransIn(BusiReq request, ServerCallContext context)
@@ -132,6 +137,88 @@ namespace BusiGrpcService.Services
             }
 
             throw Dtmgrpc.DtmGImp.Utils.DtmError2GrpcError(ex);
+        }
+
+
+        private static readonly int TransOutUID = 1;
+
+        private static readonly int TransInUID = 2;
+
+        public override async Task<Empty> TransInBSaga(BusiReq request, ServerCallContext context)
+        {
+            var barrier = _barrierFactory.CreateBranchBarrier(context);
+
+            using (MySqlConnection conn = GetBarrierConn())
+            {
+                await barrier.Call(conn, async (tx) =>
+                {
+                    await SagaGrpcAdjustBalance(conn, tx, TransInUID, (int)request.Amount, request.TransInResult);
+                });
+            }
+
+            return new Empty();
+        }
+
+        public override async Task<Empty> TransOutBSaga(BusiReq request, ServerCallContext context)
+        {
+            var barrier = _barrierFactory.CreateBranchBarrier(context);
+
+            using (MySqlConnection conn = GetBarrierConn())
+            {
+                await barrier.Call(conn, async (tx) =>
+                {
+                    await SagaGrpcAdjustBalance(conn, tx, TransOutUID, -(int)request.Amount, request.TransOutResult);
+                });
+            }
+
+            return new Empty();
+        }
+
+        public override async Task<Empty> TransInRevertBSaga(BusiReq request, ServerCallContext context)
+        {
+            var barrier = _barrierFactory.CreateBranchBarrier(context);
+
+            using (MySqlConnection conn = GetBarrierConn())
+            {
+                await barrier.Call(conn, async (tx) =>
+                {
+                    await SagaGrpcAdjustBalance(conn, tx, TransInUID, -(int)request.Amount, "");
+                });
+            }
+
+            return new Empty();
+        }
+
+        public override async Task<Empty> TransOutRevertBSaga(BusiReq request, ServerCallContext context)
+        {
+            var barrier = _barrierFactory.CreateBranchBarrier(context);
+
+            using (MySqlConnection conn = GetBarrierConn())
+            {
+                await barrier.Call(conn, async (tx) =>
+                {
+                    await SagaGrpcAdjustBalance(conn, tx, TransOutUID, (int)request.Amount, "");
+                });
+            }
+
+            return new Empty();
+        }
+
+        private MySqlConnection GetBarrierConn() => new("Server=localhost;port=3306;User ID=root;Password=123456;Database=dtm_barrier");
+
+        private async Task SagaGrpcAdjustBalance(DbConnection conn, DbTransaction tx, int uid, int amount, string result)
+        {
+            _logger.LogInformation("SagaGrpcAdjustBalance uid={uid}, amount={amount}, result={result}", uid, amount, result);
+
+            if (result.Equals("FAILURE"))
+            {
+                throw new RpcException(new Status(StatusCode.Aborted, "FAILURE"));
+            }
+
+            await conn.ExecuteAsync(
+                sql: "update dtm_busi.user_account set balance = balance + @balance where user_id = @user_id",
+                param: new { balance = amount, user_id = uid },
+                transaction: tx);
         }
     }   
 }

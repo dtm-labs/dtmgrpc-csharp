@@ -11,6 +11,21 @@ jobs:
   linux:    
     name: build on ${{ matrix.os }} 
     runs-on: ${{ matrix.os }}
+    services:
+      mysql:
+        image: 'mysql:8'
+        env:
+          MYSQL_ROOT_PASSWORD: 123456
+        command:
+        [
+          '--character-set-server=utf8mb4',
+          '--collation-server=utf8mb4_unicode_ci',
+          '--default-authentication-plugin=mysql_native_password',
+        ]
+        volumes:
+          - /home/runner/work/dtmgrpc-csharp/dtmgrpc-csharp/sqls:/docker-entrypoint-initdb.d  
+        ports:
+          - 3306:3306
     strategy:
       matrix:
         os: [ ubuntu-latest ]

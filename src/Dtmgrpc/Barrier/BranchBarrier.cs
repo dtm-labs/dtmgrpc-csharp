@@ -94,7 +94,7 @@ namespace Dtmgrpc
                 }
                 catch (Exception ex)
                 {
-                    if (ex is DtmException) throw;
+                    if (ex is DtmException || ex is Grpc.Core.RpcException) throw;
                     else throw new DtmException(ex.Message);
                 }
 
