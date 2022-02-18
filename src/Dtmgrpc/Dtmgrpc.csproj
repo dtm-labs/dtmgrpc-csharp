@@ -22,8 +22,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Dapper" Version="2.0.123" />
-		<PackageReference Include="System.Text.Json" Version="6.0.2" />
 		<PackageReference Include="Google.Protobuf" Version="3.19.4" />
 		<PackageReference Include="Grpc.Net.ClientFactory" Version="2.42.0" />
 		<PackageReference Include="Grpc.Tools" Version="2.43.0">

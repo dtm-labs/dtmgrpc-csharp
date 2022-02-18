@@ -16,6 +16,8 @@
 	<ItemGroup>
 		<InternalsVisibleTo Include="Dtmgrpc" />
 		<InternalsVisibleTo Include="Dtmgrpc.Tests" />
+		<InternalsVisibleTo Include="Dtmcli" />
+		<InternalsVisibleTo Include="Dtmcli.Tests" />
 	</ItemGroup>
 
 	<ItemGroup>
