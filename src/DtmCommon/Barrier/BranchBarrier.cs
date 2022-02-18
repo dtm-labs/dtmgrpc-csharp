@@ -1,12 +1,11 @@
 ﻿using Dapper;
-using Dtmgrpc.DtmGImp;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading.Tasks;
 
-namespace Dtmgrpc
+namespace DtmCommon
 {
     public class BranchBarrier
     {
@@ -92,10 +91,9 @@ namespace Dtmgrpc
                 {
                     await busiCall.Invoke(tx);
                 }
-                catch (Exception ex)
+                catch 
                 {
-                    if (ex is DtmException || ex is Grpc.Core.RpcException) throw;
-                    else throw new DtmException(ex.Message);
+                    throw;
                 }
 
 #if NETSTANDARD2_0

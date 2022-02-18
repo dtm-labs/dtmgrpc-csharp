@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using DtmCommon;
+using Microsoft.Extensions.Options;
 
 namespace Dtmgrpc
 {

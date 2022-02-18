@@ -1,4 +1,5 @@
-﻿using Dtmgrpc.DtmGImp;
+﻿using DtmCommon;
+using Dtmgrpc.DtmGImp;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -32,7 +33,7 @@ namespace Dtmgrpc
         {
             if (logger == null) logger = _logger;
            
-            var tb = DtmGImp.Utils.TransBaseFromGrpc(context);
+            var tb = Utils.TransBaseFromGrpc(context);
 
             var ti = new BranchBarrier(tb.TransType, tb.Gid, tb.BranchIDGen.BranchID, tb.Op, _options, _dbUtils, logger);
 
