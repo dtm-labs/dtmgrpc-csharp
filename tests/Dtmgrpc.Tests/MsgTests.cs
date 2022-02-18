@@ -120,9 +120,8 @@ namespace Dtmgrpc.Tests
             var mockBusiCall = new Mock<Func<DbTransaction, Task<bool>>>();
             mockBusiCall.Setup(x => x.Invoke(It.IsAny<DbTransaction>())).Returns(Task.FromResult(true));
 
-            var res = await msg.DoAndSubmitDB(busi + "/query", db, mockBusiCall.Object);
+            await msg.DoAndSubmitDB(busi + "/query", db, mockBusiCall.Object);
 
-            Assert.True(res);
             mockBusiCall.Verify(x => x.Invoke(It.IsAny<DbTransaction>()), Times.Once);
         }
 
@@ -147,9 +146,7 @@ namespace Dtmgrpc.Tests
             var mockBusiCall = new Mock<Func<DbTransaction, Task>>();
             mockBusiCall.Setup(x => x.Invoke(It.IsAny<DbTransaction>())).Throws(new DtmFailureException());
 
-            var res = await msg.DoAndSubmitDB(busi + "/query", db, mockBusiCall.Object);
-
-            Assert.False(res);
+            await Assert.ThrowsAsync<DtmFailureException>(async () => await msg.DoAndSubmitDB(busi + "/query", db, mockBusiCall.Object));
             dtmClient.Verify(x => x.DtmGrpcCall(It.IsAny<TransBase>(), Constant.Op.Abort), Times.Once);
         }
 
@@ -176,9 +173,7 @@ namespace Dtmgrpc.Tests
             var mockBusiCall = new Mock<Func<DbTransaction, Task<bool>>>();
             mockBusiCall.Setup(x => x.Invoke(It.IsAny<DbTransaction>())).Throws(new Exception("ex"));
 
-            var res = await msg.DoAndSubmitDB(busi + "/query", db, mockBusiCall.Object);
-
-            Assert.False(res);
+            await Assert.ThrowsAsync<DtmException>(async () => await msg.DoAndSubmitDB(busi + "/query", db, mockBusiCall.Object));
             dtmClient.Verify(x => x.InvokeBranch<Empty, Empty>(It.IsAny<TransBase>(), It.IsAny<Empty>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
     }

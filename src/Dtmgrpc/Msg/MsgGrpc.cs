@@ -46,15 +46,15 @@ namespace Dtmgrpc
             await this._dtmClient.DtmGrpcCall(this._transBase, Constant.Op.Submit);
         }
 
-        public async Task<bool> DoAndSubmitDB(string queryPrepared, DbConnection db, Func<DbTransaction, Task> busiCall, CancellationToken cancellationToken = default)
+        public async Task DoAndSubmitDB(string queryPrepared, DbConnection db, Func<DbTransaction, Task> busiCall, CancellationToken cancellationToken = default)
         {
-            return await this.DoAndSubmit(queryPrepared, async bb =>
+            await this.DoAndSubmit(queryPrepared, async bb =>
             {
                 await bb.Call(db, busiCall);
             }, cancellationToken);
         }
 
-        public async Task<bool> DoAndSubmit(string queryPrepared, Func<BranchBarrier, Task> busiCall, CancellationToken cancellationToken = default)
+        public async Task DoAndSubmit(string queryPrepared, Func<BranchBarrier, Task> busiCall, CancellationToken cancellationToken = default)
         {
             var bb = _branchBarrierFactory.CreateBranchBarrier(this._transBase.TransType, this._transBase.Gid, Constant.Barrier.MSG_BRANCHID, Constant.TYPE_MSG);
 
@@ -96,9 +96,8 @@ namespace Dtmgrpc
                 await this.Submit(cancellationToken);
             }
 
-            if (errb != null) return false;
-
-            return true;
+            // busiCall error
+            if (errb != null) throw errb;
         }
 
         /// <summary>
