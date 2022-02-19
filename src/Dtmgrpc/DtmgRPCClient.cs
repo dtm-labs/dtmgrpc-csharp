@@ -4,6 +4,7 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -19,10 +20,12 @@ namespace Dtmgrpc
         private static readonly string HTTPPrefix = "http://";
 
         private readonly Driver.IDtmDriver _dtmDriver;
+        private readonly DtmOptions _options;
 
-        public DtmgRPCClient(Driver.IDtmDriver dtmDriver)
+        public DtmgRPCClient(Driver.IDtmDriver dtmDriver, IOptions<DtmOptions> optionsAccs)
         {
             this._dtmDriver = dtmDriver;
+            this._options = optionsAccs.Value;
         }
 
         public async Task DtmGrpcCall(TransBase transBase, string operation)
@@ -31,14 +34,18 @@ namespace Dtmgrpc
             var method = new Method<dtmgpb.DtmRequest, Empty>(MethodType.Unary, DtmServiceName, operation, DtmRequestMarshaller, DtmReplyMarshaller);
 
             using var channel = GrpcChannel.ForAddress(transBase.Dtm);
-            await channel.CreateCallInvoker().AsyncUnaryCall(method, string.Empty, new CallOptions(), dtmRequest);
+            var callOptions = new CallOptions()
+                .WithDeadline(DateTime.UtcNow.AddMilliseconds(_options.DtmTimeout));
+            await channel.CreateCallInvoker().AsyncUnaryCall(method, string.Empty, callOptions, dtmRequest);
         }
 
         public async Task<string> GenGid(string grpcServer)
         {
             using var channel = GrpcChannel.ForAddress(grpcServer);
             var client = new dtmgpb.Dtm.DtmClient(channel);
-            var reply = await client.NewGidAsync(new Empty(), new CallOptions());
+            var callOptions = new CallOptions()
+                .WithDeadline(DateTime.UtcNow.AddMilliseconds(_options.DtmTimeout));
+            var reply = await client.NewGidAsync(new Empty(), callOptions);
             return reply.Gid;
         }
 
@@ -59,9 +66,9 @@ namespace Dtmgrpc
             var grpcMethod = Utils.CreateMethod<TRequest, TResponse>(MethodType.Unary, serviceName, method);
 
             var metadata = Utils.TransInfo2Metadata(tb.Gid, tb.TransType, branchId, op, tb.Dtm);
-            var callOptions = new CallOptions();
-            callOptions.WithHeaders(metadata);
-
+            var callOptions = new CallOptions()
+                .WithHeaders(metadata)
+                .WithDeadline(DateTime.UtcNow.AddMilliseconds(_options.BranchTimeout));
             var resp = await channel.CreateCallInvoker().AsyncUnaryCall(grpcMethod, string.Empty, callOptions, msg);
             return resp;
         }
@@ -80,7 +87,9 @@ namespace Dtmgrpc
 
             using var channel = GrpcChannel.ForAddress(tb.Dtm);
             var client = new dtmgpb.Dtm.DtmClient(channel);
-            await client.RegisterBranchAsync(request, new CallOptions());
+            var callOptions = new CallOptions()
+                .WithDeadline(DateTime.UtcNow.AddMilliseconds(_options.DtmTimeout));
+            await client.RegisterBranchAsync(request, callOptions);
         }
 
         public TransBase TransBaseFromGrpc(ServerCallContext context)
