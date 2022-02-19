@@ -57,7 +57,7 @@ namespace Dtmgrpc.IntegrationTests
             };
         }
 
-        public static ServiceProvider AddDtmGrpc()
+        public static ServiceProvider AddDtmGrpc(int dtmTimout = 10000)
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             var services = new ServiceCollection();
@@ -65,6 +65,7 @@ namespace Dtmgrpc.IntegrationTests
             services.AddDtmGrpc(x =>
             {
                 x.DtmGrpcUrl = DTMgRPCUrl;
+                x.DtmTimeout = dtmTimout;
             });
 
             var provider = services.BuildServiceProvider();
