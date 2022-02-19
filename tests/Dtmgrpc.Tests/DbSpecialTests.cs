@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using DtmCommon;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Dtmgrpc.Tests
@@ -17,11 +18,11 @@ namespace Dtmgrpc.Tests
             });
 
             var provider = services.BuildServiceProvider();
-            var dbSpecialDelegate = provider.GetRequiredService<DtmGImp.DbSpecialDelegate>();
+            var dbSpecialDelegate = provider.GetRequiredService<DbSpecialDelegate>();
 
             var special = dbSpecialDelegate.GetDbSpecial();
 
-            Assert.IsType<DtmGImp.MysqlDBSpecial>(special);
+            Assert.IsType<MysqlDBSpecial>(special);
             Assert.Equal("xa start 'xa1'", special.GetXaSQL("start", "xa1"));
             Assert.Equal("insert ignore into a(f) values(@f)", special.GetInsertIgnoreTemplate("a(f) values(@f)", "c"));
         }
@@ -39,11 +40,11 @@ namespace Dtmgrpc.Tests
             });
 
             var provider = services.BuildServiceProvider();
-            var dbSpecialDelegate = provider.GetRequiredService<DtmGImp.DbSpecialDelegate>();
+            var dbSpecialDelegate = provider.GetRequiredService<DbSpecialDelegate>();
 
             var special = dbSpecialDelegate.GetDbSpecial();
 
-            Assert.IsType<DtmGImp.PostgresDBSpecial>(special);
+            Assert.IsType<PostgresDBSpecial>(special);
             Assert.Equal("begin", special.GetXaSQL("start", "xa1"));
             Assert.Equal("insert into a(f) values(@f) on conflict ON CONSTRAINT c do nothing", special.GetInsertIgnoreTemplate("a(f) values(@f)", "c"));
         }
@@ -61,11 +62,11 @@ namespace Dtmgrpc.Tests
             });
 
             var provider = services.BuildServiceProvider();
-            var dbSpecialDelegate = provider.GetRequiredService<DtmGImp.DbSpecialDelegate>();
+            var dbSpecialDelegate = provider.GetRequiredService<DbSpecialDelegate>();
 
             var special = dbSpecialDelegate.GetDbSpecial();
 
-            Assert.IsType<DtmGImp.SqlServerDBSpecial>(special);
+            Assert.IsType<SqlServerDBSpecial>(special);
             Assert.Equal("insert into a(f) values(@f)", special.GetInsertIgnoreTemplate("a(f) values(@f)", "c"));
             Assert.Throws<DtmException>(() => special.GetXaSQL("", ""));
         }
@@ -84,7 +85,7 @@ namespace Dtmgrpc.Tests
 
             var provider = services.BuildServiceProvider();
 
-            var ex = Assert.Throws<DtmException>(()=> provider.GetRequiredService<DtmGImp.DbSpecialDelegate>());
+            var ex = Assert.Throws<DtmException>(()=> provider.GetRequiredService<DbSpecialDelegate>());
             Assert.Equal("unknown db type 'other'", ex.Message);
         }
     }

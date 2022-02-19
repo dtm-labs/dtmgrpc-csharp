@@ -1,4 +1,5 @@
-﻿using Dtmgrpc.DtmGImp;
+﻿using DtmCommon;
+using Dtmgrpc.DtmGImp;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;

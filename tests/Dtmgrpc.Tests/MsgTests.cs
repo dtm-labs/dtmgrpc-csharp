@@ -1,4 +1,5 @@
 ﻿using Apps72.Dev.Data.DbMocker;
+using DtmCommon;
 using Dtmgrpc.DtmGImp;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.DependencyInjection;
@@ -173,7 +174,7 @@ namespace Dtmgrpc.Tests
             var mockBusiCall = new Mock<Func<DbTransaction, Task<bool>>>();
             mockBusiCall.Setup(x => x.Invoke(It.IsAny<DbTransaction>())).Throws(new Exception("ex"));
 
-            await Assert.ThrowsAsync<DtmException>(async () => await msg.DoAndSubmitDB(busi + "/query", db, mockBusiCall.Object));
+            await Assert.ThrowsAsync<Exception>(async () => await msg.DoAndSubmitDB(busi + "/query", db, mockBusiCall.Object));
             dtmClient.Verify(x => x.InvokeBranch<Empty, Empty>(It.IsAny<TransBase>(), It.IsAny<Empty>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
     }

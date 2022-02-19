@@ -1,4 +1,5 @@
-﻿using Dtmgrpc.DtmGImp;
+﻿using DtmCommon;
+using Dtmgrpc.DtmGImp;
 using Google.Protobuf;
 using System.Collections.Generic;
 using System.Threading;

@@ -1,4 +1,4 @@
-﻿namespace Dtmgrpc
+﻿namespace DtmCommon
 {
     internal class Constant
     {
@@ -43,4 +43,5 @@
             internal static readonly string MSG_BARRIER_ID = "01";
         }
     }
+
 }

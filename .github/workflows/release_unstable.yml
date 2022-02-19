@@ -18,11 +18,13 @@ jobs:
         dotnet-version: 6.0.x
     - name: Build with dotnet
       run: |
-        dotnet build --configuration Release --source https://api.nuget.org/v3/index.json src/Dtmcli/Dtmcli.csproj        
+        dotnet build --configuration Release --source https://api.nuget.org/v3/index.json src/Dtmgrpc/Dtmgrpc.csproj        
+        dotnet build --configuration Release --source https://api.nuget.org/v3/index.json src/DtmCommon/DtmCommon.csproj
     - name: Pack with dotnet
       run: |
         ver=alpha`date +%Y%m%d%H%M%S`
-        dotnet pack src/Dtmcli/Dtmcli.csproj --version-suffix $ver -o /home/runner/work/nugetpkgs -c Release --no-build
+        dotnet pack src/Dtmgrpc/Dtmgrpc.csproj --version-suffix $ver -o /home/runner/work/nugetpkgs -c Release --no-build
+        dotnet pack src/DtmCommon/DtmCommon.csproj --version-suffix $ver -o /home/runner/work/nugetpkgs -c Release --no-build
     - name: Upload artifact
       uses: actions/upload-artifact@v1
       with:

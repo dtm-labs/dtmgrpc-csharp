@@ -4,7 +4,7 @@ using System;
 using System.Data.Common;
 using System.Threading.Tasks;
 
-namespace Dtmgrpc.DtmGImp
+namespace DtmCommon
 {
     public class DbUtils
     {
@@ -12,7 +12,7 @@ namespace Dtmgrpc.DtmGImp
         private readonly DbSpecialDelegate _specialDelegate;
 
         public DbUtils(IOptions<DtmOptions> optionsAccs, DbSpecialDelegate specialDelegate)
-        { 
+        {
             _options = optionsAccs.Value;
             _specialDelegate = specialDelegate;
         }
@@ -45,4 +45,5 @@ namespace Dtmgrpc.DtmGImp
             return (result, err);
         }
     }
+
 }

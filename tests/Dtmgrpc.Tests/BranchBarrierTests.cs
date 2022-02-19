@@ -1,5 +1,6 @@
 ﻿using Apps72.Dev.Data.DbMocker;
 using Dapper;
+using DtmCommon;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using System;
@@ -131,7 +132,7 @@ namespace Dtmgrpc.Tests
             });
 
             var provider = services.BuildServiceProvider();
-            var dbUtils = provider.GetRequiredService<DtmGImp.DbUtils>();
+            var dbUtils = provider.GetRequiredService<DbUtils>();
 
             var conn = GetDbConnection();
             conn.Mocks.When(cmd => cmd.CommandText.Contains("aaa.bbb")).ReturnsScalar(cmd => 1);

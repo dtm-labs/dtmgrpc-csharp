@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Dtmgrpc.DtmGImp
+namespace DtmCommon
 {
     public class BranchIDGen
     {
