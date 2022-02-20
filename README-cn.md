@@ -1,57 +1,56 @@
-English | [简体中文](./README-cn.md)
-
+[English](./README.md) | 简体中文
 
 # dtmgrpc-csharp
 
-`dtmgrpc-csharp` is the C# client of Distributed Transaction Manager [DTM](https://github.com/dtm-labs/dtm) that communicates with DTM Server through gRPC protocol. 
+`dtmgrpc-csharp` 是分布式事务管理器 [DTM](https://github.com/dtm-labs/dtm) 的 C# 客户端，使用 gRPC 协议和 DTM 服务端进行交互。 
 
-It has supported distributed transaction patterns of Saga pattern, TCC pattern and 2-phase message pattern.
+目前已经支持 SAGA 、 TCC 和二阶段消息三种事务模式。
 
 ![Build_And_UnitTest](https://github.com/catcherwong/dtmgrpc-csharp/actions/workflows/build_and_ut.yml/badge.svg) ![Build_And_IntegrationTests](https://github.com/catcherwong/dtmgrpc-csharp/actions/workflows/build_and_it.yml/badge.svg)
 
 ![](https://img.shields.io/nuget/v/Dtmgrpc.svg)  ![](https://img.shields.io/nuget/vpre/Dtmgrpc.svg) ![](https://img.shields.io/nuget/dt/Dtmgrpc) ![](https://img.shields.io/github/license/catcherwong/dtmgrpc-csharp)
 
-## Installation
+## 安装
 
-Add nuget package via the following command
+通过下面的命名安装 nuget 包
 
 ```sh
 dotnet add package Dtmgrpc
 ```
 
-## Configuration
+## 配置
 
-There are two ways to configure
+这里有两种方式进行配置
 
-1. Configure with setup action
+1. 使用 setup action
 
 ```cs
 services.AddDtmGrpc(x =>
 {
-    // DTM server grpc address
+    // DTM server 的 gRPC 地址
     x.DtmGrpcUrl = "http://localhost:36790";
     
-    // request timeout for DTM server, unit is milliseconds
+    // 请求 DTM server 的超时时间, 单位是毫秒
     x.DtmTimeout = 10000; 
     
-    // request timeout for trans branch, unit is milliseconds
+    // 请求分支事务的超时时间, 单位是毫秒
     x.BranchTimeout = 10000;
     
-    // barrier database type, mysql, postgres, sqlserver
+    // 子事务屏障的数据库类型, mysql, postgres, sqlserver
     x.DBType = "mysql";
 
-    // barrier table name
+    // 子事务屏障的数据表名
     x.BarrierTableName = "dtm_barrier.barrier";
 });
 ```
 
-2. Configure with `IConfiguration`
+2. 使用 `IConfiguration`
 
 ```cs
 services.AddDtmGrpc(Configuration, "dtm");
 ```
 
-And the configuration file 
+添加配置文件，以 JSON 为例： 
 
 ```JSON
 {
@@ -65,9 +64,9 @@ And the configuration file
 }
 ```
 
-## Usage
+## 用法
 
-### SAGA pattern
+### SAGA
 
 ```cs
 public class MyBusi
@@ -86,15 +85,15 @@ public class MyBusi
         var svc = "localhost:5005";
 
         var saga = _transFactory.NewSagaGrpc(gid);
-        // Add sub-transaction
+        // 添加子事务操作
         saga.Add(
-            // URL of forward action 
+            // 正向操作 URL
             svc + "/busi.Busi/TransOut",
             
-            // URL of compensating action
+            // 逆向操作 URL
             svc + "/busi.Busi/TransOutCompensate",
 
-            // Arguments of actions
+            // 参数
             req);
         saga.Add(
             svc + "/busi.Busi/TransIn",
@@ -106,7 +105,7 @@ public class MyBusi
 }
 ```
 
-### TCC pattern
+### TCC
 
 ```cs
 public class MyBusi
@@ -126,18 +125,18 @@ public class MyBusi
 
         await _globalTransaction.Excecute("http://localhost:36790", gid, async tcc =>
         {
-            // Create tcc sub-transaction
+            // 调用 TCC 子事务
             await tcc.CallBranch<BusiReq, Empty>(
-                // Arguments of stages
+                // 参数
                 req,
 
-                // URL of Try stage
+                // Try 阶段的 URL
                 svc + "/busi.Busi/TransOutTry",
 
-                // URL of Confirm stage
+                // Confirm 阶段的 URL 
                 svc + "/busi.Busi/TransOutConfirm",
 
-                 // URL of Cancel stage
+                 // Cancel 阶段的 URL
                 svc + "/busi.Busi/TransOutCancel");
 
             await tcc.CallBranch<BusiReq, Empty>(
@@ -151,7 +150,7 @@ public class MyBusi
 ```
 
 
-### 2-phase message pattern
+### 二阶段消息
 
 ```cs
 public class MyBusi
@@ -170,24 +169,24 @@ public class MyBusi
         var svc = "localhost:5005";
 
         var msg = _transFactory.NewMsgGrpc(gid);
-        // Add sub-transaction
+        // 添加子事务操作
         msg.Add(
-            // URL of action 
+            // 操作的 URL
             svc + "/busi.Busi/TransOut",
 
-            // Arguments of action
+            // 参数
             req);
         msg.Add(
             svc + "/busi.Busi/TransIn",
             req);
 
-        // Usage 1:
-        // Send prepare message 
+        // 用法 1:
+        // 发送 prepare 消息
         await msg.Prepare(svc + "/busi.Busi/QueryPrepared");
-        // Send submit message
+        // 发送 submit 消息
         await msg.Submit();
 
-        // Usage 2:
+        // 用法 2:
         using (MySqlConnection conn = new MySqlConnection("You connection string ...."))
         {
             await msg.DoAndSubmitDB(svc + "/busi.Busi/QueryPrepared", conn, async tx => 
