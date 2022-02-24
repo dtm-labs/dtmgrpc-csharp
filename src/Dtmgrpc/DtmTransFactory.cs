@@ -1,4 +1,5 @@
 ﻿using DtmCommon;
+using Dtmgrpc.DtmGImp;
 using Microsoft.Extensions.Options;
 
 namespace Dtmgrpc
@@ -18,14 +19,20 @@ namespace Dtmgrpc
 
         public MsgGrpc NewMsgGrpc(string gid)
         {
-            var msg = new MsgGrpc(_rpcClient, _branchBarrierFactory, _options.DtmGrpcUrl, gid);
+            var msg = new MsgGrpc(_rpcClient, _branchBarrierFactory, _options.DtmGrpcUrl.GetWithoutPrefixgRPCUrl(), gid);
             return msg;
         }
 
         public SagaGrpc NewSagaGrpc(string gid)
         {
-            var saga = new SagaGrpc(_rpcClient, _options.DtmGrpcUrl, gid);
+            var saga = new SagaGrpc(_rpcClient, _options.DtmGrpcUrl.GetWithoutPrefixgRPCUrl(), gid);
             return saga;
+        }
+
+        public TccGrpc NewTccGrpc(string gid)
+        {
+            var tcc = new TccGrpc(_rpcClient, TransBase.NewTransBase(gid, Constant.TYPE_TCC, _options.DtmGrpcUrl.GetWithoutPrefixgRPCUrl(), string.Empty));
+            return tcc;
         }
     }
 }

@@ -1,7 +1,5 @@
 ﻿using DtmCommon;
-using Dtmgrpc.DtmGImp;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,13 +10,13 @@ namespace Dtmgrpc
     {
         private readonly IDtmgRPCClient _dtmClient;
         private readonly ILogger _logger;
-        private readonly DtmOptions _options;
+        private readonly IDtmTransFactory _transFactory;
 
-        public TccGlobalTransaction(IDtmgRPCClient dtmClient, ILoggerFactory factory, IOptions<DtmOptions> optionsAccs)
+        public TccGlobalTransaction(IDtmgRPCClient dtmClient, ILoggerFactory factory, IDtmTransFactory transFactory)
         {
             this._dtmClient = dtmClient;
             this._logger = factory.CreateLogger<TccGlobalTransaction>();
-            this._options = optionsAccs.Value;
+            this._transFactory = transFactory;
         }
 
         public async Task<string> Excecute(string gid, Func<TccGrpc, Task> tcc_cb, CancellationToken cancellationToken = default)
@@ -28,7 +26,7 @@ namespace Dtmgrpc
 
         public async Task<string> Excecute(string gid, Action<TccGrpc> custom, Func<TccGrpc, Task> tcc_cb, CancellationToken cancellationToken = default)
         {
-            var tcc = new TccGrpc(this._dtmClient, TransBase.NewTransBase(gid, Constant.TYPE_TCC, _options.DtmGrpcUrl.GetWithoutPrefixgRPCUrl(), string.Empty));
+            var tcc = _transFactory.NewTccGrpc(gid);
             custom(tcc);
 
             try

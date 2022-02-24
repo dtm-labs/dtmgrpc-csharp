@@ -1,8 +1,6 @@
 ﻿using DtmCommon;
-using Dtmgrpc.DtmGImp;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Moq;
 using System.Collections.Generic;
 using Xunit;
@@ -20,7 +18,11 @@ namespace Dtmgrpc.Tests
             TransMockHelper.MockTransRequestBranch(dtmClient, false);
 
             var gid = "tcc_gid";
-            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance, CreateOptions());
+
+            var transFactory = new Mock<IDtmTransFactory>();
+            transFactory.Setup(x => x.NewTccGrpc(It.IsAny<string>())).Returns(new TccGrpc(dtmClient.Object, TransBase.NewTransBase(gid, "tcc", "", "")));
+            
+            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance, transFactory.Object);
             var res = await globalTrans.Excecute(gid, async (tcc) =>
             {
                 await tcc.CallBranch<Empty, Empty>(new Empty(), "localhost:9999/svc/TransOutTry", "localhost:9999/svc/TransOutConfirm", "localhost:9999/svc/TransOutCancel");
@@ -40,7 +42,11 @@ namespace Dtmgrpc.Tests
             TransMockHelper.MockTransRequestBranch(dtmClient, true);
 
             var gid = "tcc_gid";
-            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance, CreateOptions());
+
+            var transFactory = new Mock<IDtmTransFactory>();
+            transFactory.Setup(x => x.NewTccGrpc(It.IsAny<string>())).Returns(new TccGrpc(dtmClient.Object, TransBase.NewTransBase(gid, "tcc", "", "")));
+
+            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance, transFactory.Object);
             var res = await globalTrans.Excecute(gid, async (tcc) =>
             {
                 await tcc.CallBranch<Empty, Empty>(new Empty(), "localhost:9999/svc/TransOutTry", "localhost:9999/svc/TransOutConfirm", "localhost:9999/svc/TransOutCancel");
@@ -60,7 +66,11 @@ namespace Dtmgrpc.Tests
             TransMockHelper.MockTransRequestBranch(dtmClient, false);
 
             var gid = "tcc_gid";
-            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance, CreateOptions());
+
+            var transFactory = new Mock<IDtmTransFactory>();
+            transFactory.Setup(x => x.NewTccGrpc(It.IsAny<string>())).Returns(new TccGrpc(dtmClient.Object, TransBase.NewTransBase(gid, "tcc", "", "")));
+
+            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance, transFactory.Object);
             var res = await globalTrans.Excecute(gid, tcc =>
             {
                 tcc.EnableWaitResult();
@@ -86,14 +96,6 @@ namespace Dtmgrpc.Tests
             });
 
             Assert.Equal(gid, res);
-        }
-
-        private IOptions<DtmOptions> CreateOptions()
-        {
-            return Options.Create(new DtmOptions 
-            {
-                 DtmGrpcUrl = "http://localhost:36790"
-            });
         }
     }
 }
