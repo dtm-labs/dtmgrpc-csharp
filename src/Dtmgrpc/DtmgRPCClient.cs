@@ -33,15 +33,15 @@ namespace Dtmgrpc
             var dtmRequest = BuildDtmRequest(transBase);
             var method = new Method<dtmgpb.DtmRequest, Empty>(MethodType.Unary, DtmServiceName, operation, DtmRequestMarshaller, DtmReplyMarshaller);
 
-            using var channel = GrpcChannel.ForAddress(transBase.Dtm);
+            using var channel = GrpcChannel.ForAddress(_options.DtmGrpcUrl);
             var callOptions = new CallOptions()
                 .WithDeadline(DateTime.UtcNow.AddMilliseconds(_options.DtmTimeout));
             await channel.CreateCallInvoker().AsyncUnaryCall(method, string.Empty, callOptions, dtmRequest);
         }
 
-        public async Task<string> GenGid(string grpcServer)
+        public async Task<string> GenGid()
         {
-            using var channel = GrpcChannel.ForAddress(grpcServer);
+            using var channel = GrpcChannel.ForAddress(_options.DtmGrpcUrl);
             var client = new dtmgpb.Dtm.DtmClient(channel);
             var callOptions = new CallOptions()
                 .WithDeadline(DateTime.UtcNow.AddMilliseconds(_options.DtmTimeout));
@@ -85,7 +85,7 @@ namespace Dtmgrpc
             request.BusiPayload = bd;
             request.Data.Add(added);
 
-            using var channel = GrpcChannel.ForAddress(tb.Dtm);
+            using var channel = GrpcChannel.ForAddress(_options.DtmGrpcUrl);
             var client = new dtmgpb.Dtm.DtmClient(channel);
             var callOptions = new CallOptions()
                 .WithDeadline(DateTime.UtcNow.AddMilliseconds(_options.DtmTimeout));

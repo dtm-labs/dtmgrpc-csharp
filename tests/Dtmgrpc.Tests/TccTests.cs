@@ -2,6 +2,7 @@
 using Dtmgrpc.DtmGImp;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
 using System.Collections.Generic;
 using Xunit;
@@ -19,8 +20,8 @@ namespace Dtmgrpc.Tests
             TransMockHelper.MockTransRequestBranch(dtmClient, false);
 
             var gid = "tcc_gid";
-            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance);
-            var res = await globalTrans.Excecute("", gid, async (tcc) =>
+            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance, CreateOptions());
+            var res = await globalTrans.Excecute(gid, async (tcc) =>
             {
                 await tcc.CallBranch<Empty, Empty>(new Empty(), "localhost:9999/svc/TransOutTry", "localhost:9999/svc/TransOutConfirm", "localhost:9999/svc/TransOutCancel");
                 await tcc.CallBranch<Empty, Empty>(new Empty(), "localhost:9999/svc/TransInTry", "localhost:9999/svc/TransInConfirm", "localhost:9999/svc/TransInCancel");
@@ -39,8 +40,8 @@ namespace Dtmgrpc.Tests
             TransMockHelper.MockTransRequestBranch(dtmClient, true);
 
             var gid = "tcc_gid";
-            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance);
-            var res = await globalTrans.Excecute("", gid, async (tcc) =>
+            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance, CreateOptions());
+            var res = await globalTrans.Excecute(gid, async (tcc) =>
             {
                 await tcc.CallBranch<Empty, Empty>(new Empty(), "localhost:9999/svc/TransOutTry", "localhost:9999/svc/TransOutConfirm", "localhost:9999/svc/TransOutCancel");
                 await tcc.CallBranch<Empty, Empty>(new Empty(), "localhost:9999/svc/TransInTry", "localhost:9999/svc/TransInConfirm", "localhost:9999/svc/TransInCancel");
@@ -59,8 +60,8 @@ namespace Dtmgrpc.Tests
             TransMockHelper.MockTransRequestBranch(dtmClient, false);
 
             var gid = "tcc_gid";
-            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance);
-            var res = await globalTrans.Excecute("", gid, tcc =>
+            var globalTrans = new TccGlobalTransaction(dtmClient.Object, NullLoggerFactory.Instance, CreateOptions());
+            var res = await globalTrans.Excecute(gid, tcc =>
             {
                 tcc.EnableWaitResult();
                 tcc.SetRetryInterval(10);
@@ -85,6 +86,14 @@ namespace Dtmgrpc.Tests
             });
 
             Assert.Equal(gid, res);
+        }
+
+        private IOptions<DtmOptions> CreateOptions()
+        {
+            return Options.Create(new DtmOptions 
+            {
+                 DtmGrpcUrl = "http://localhost:36790"
+            });
         }
     }
 }

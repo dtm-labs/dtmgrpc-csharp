@@ -32,7 +32,7 @@ namespace Dtmgrpc.IntegrationTests
         {
             var provider = ITTestHelper.AddDtmGrpc(1);
             var client = provider.GetRequiredService<IDtmgRPCClient>();
-            var ex = await Assert.ThrowsAsync<RpcException>(async () => await client.GenGid(ITTestHelper.DTMgRPCUrl));
+            var ex = await Assert.ThrowsAsync<RpcException>(async () => await client.GenGid());
             Assert.Equal(StatusCode.DeadlineExceeded, ex.StatusCode);
         }
     }

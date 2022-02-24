@@ -10,7 +10,7 @@ namespace Dtmgrpc
     {
         Task DtmGrpcCall(TransBase transBase, string operation);
 
-        Task<string> GenGid(string grpcServer);
+        Task<string> GenGid();
 
         TransBase TransBaseFromGrpc(ServerCallContext context);
 

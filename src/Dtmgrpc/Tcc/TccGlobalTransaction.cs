@@ -1,6 +1,7 @@
 ﻿using DtmCommon;
 using Dtmgrpc.DtmGImp;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,21 +12,23 @@ namespace Dtmgrpc
     {
         private readonly IDtmgRPCClient _dtmClient;
         private readonly ILogger _logger;
+        private readonly DtmOptions _options;
 
-        public TccGlobalTransaction(IDtmgRPCClient dtmClient, ILoggerFactory factory)
+        public TccGlobalTransaction(IDtmgRPCClient dtmClient, ILoggerFactory factory, IOptions<DtmOptions> optionsAccs)
         {
             this._dtmClient = dtmClient;
             this._logger = factory.CreateLogger<TccGlobalTransaction>();
+            this._options = optionsAccs.Value;
         }
 
-        public async Task<string> Excecute(string dtm, string gid, Func<TccGrpc, Task> tcc_cb, CancellationToken cancellationToken = default)
+        public async Task<string> Excecute(string gid, Func<TccGrpc, Task> tcc_cb, CancellationToken cancellationToken = default)
         {
-            return await Excecute(dtm, gid, x => { }, tcc_cb, cancellationToken);
+            return await Excecute(gid, x => { }, tcc_cb, cancellationToken);
         }
 
-        public async Task<string> Excecute(string dtm, string gid, Action<TccGrpc> custom, Func<TccGrpc, Task> tcc_cb, CancellationToken cancellationToken = default)
+        public async Task<string> Excecute(string gid, Action<TccGrpc> custom, Func<TccGrpc, Task> tcc_cb, CancellationToken cancellationToken = default)
         {
-            var tcc = new TccGrpc(this._dtmClient, TransBase.NewTransBase(gid, Constant.TYPE_TCC, dtm, ""));
+            var tcc = new TccGrpc(this._dtmClient, TransBase.NewTransBase(gid, Constant.TYPE_TCC, _options.DtmGrpcUrl.GetWithoutPrefixgRPCUrl(), string.Empty));
             custom(tcc);
 
             try

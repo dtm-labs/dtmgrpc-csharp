@@ -124,7 +124,7 @@ public class MyBusi
         var req = new BusiReq {  Amount = 30 };
         var svc = "localhost:5005";
 
-        await _globalTransaction.Excecute("http://localhost:36790", gid, async tcc =>
+        await _globalTransaction.Excecute(gid, async tcc =>
         {
             // Create tcc sub-transaction
             await tcc.CallBranch<BusiReq, Empty>(

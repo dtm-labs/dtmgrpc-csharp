@@ -8,6 +8,10 @@ namespace Dtmgrpc.DtmGImp
 {
     public static class Utils
     {
+        internal static readonly string HTTP = "http://";
+        internal static readonly string HTTPS = "https://";
+        internal static readonly char Slash = '/';
+
         internal static string ToJsonString(object obj)
         { 
             return System.Text.Json.JsonSerializer.Serialize(obj);
@@ -74,6 +78,13 @@ namespace Dtmgrpc.DtmGImp
                     m.MergeFrom(d);
                     return m;
                 });
+        }
+
+        internal static string GetWithoutPrefixgRPCUrl(this string url)
+        { 
+            return url?.TrimEnd(Slash)
+                .Replace(HTTP, string.Empty, StringComparison.OrdinalIgnoreCase)
+                .Replace(HTTPS, string.Empty, StringComparison.Ordinal) ?? string.Empty;
         }
 
         private static readonly System.Collections.Generic.Dictionary<string, Exception> StrExceptions = new System.Collections.Generic.Dictionary<string, Exception>

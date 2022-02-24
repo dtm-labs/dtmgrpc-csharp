@@ -17,7 +17,7 @@ namespace Dtmgrpc.IntegrationTests
             var gid = "tccTestGid" + Guid.NewGuid().ToString();
             var req = ITTestHelper.GenBusiReq(false, false);
             var busiGrpc = ITTestHelper.BuisgRPCUrl;
-            var res = await globalTransaction.Excecute(ITTestHelper.DTMgRPCUrl, gid, async tcc =>
+            var res = await globalTransaction.Excecute(gid, async tcc =>
             {
                 await tcc.CallBranch<busi.BusiReq, Empty>(req, busiGrpc + "/busi.Busi/TransOut", busiGrpc + "/busi.Busi/TransOutConfirm", busiGrpc + "/busi.Busi/TransOutRevert");
                 await tcc.CallBranch<busi.BusiReq, Empty>(req, busiGrpc + "/busi.Busi/TransIn", busiGrpc + "/busi.Busi/TransInConfirm", busiGrpc + "/busi.Busi/TransInRevert");
@@ -39,7 +39,7 @@ namespace Dtmgrpc.IntegrationTests
             var gid = "tccTestGid" + Guid.NewGuid().ToString();
             var req = ITTestHelper.GenBusiReq(false, true);
             var busiGrpc = ITTestHelper.BuisgRPCUrl;
-            var res = await globalTransaction.Excecute(ITTestHelper.DTMgRPCUrl, gid, async tcc =>
+            var res = await globalTransaction.Excecute(gid, async tcc =>
             {
                 await tcc.CallBranch<busi.BusiReq, Empty>(req, busiGrpc + "/busi.Busi/TransOutTcc", busiGrpc + "/busi.Busi/TransOutConfirm", busiGrpc + "/busi.Busi/TransOutRevert");
                 await tcc.CallBranch<busi.BusiReq, Empty>(req, busiGrpc + "/busi.Busi/TransInTcc", busiGrpc + "/busi.Busi/TransInConfirm", busiGrpc + "/busi.Busi/TransInRevert");
