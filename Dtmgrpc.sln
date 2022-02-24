@@ -20,7 +20,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "protos", "protos", "{A0C2C4
 		tests\BusiGrpcService\Protos\busi.proto = tests\BusiGrpcService\Protos\busi.proto
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DtmCommon", "src\DtmCommon\DtmCommon.csproj", "{7823B7E5-77D4-49FB-9FEB-50F924D8F6E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DtmCommon", "src\DtmCommon\DtmCommon.csproj", "{7823B7E5-77D4-49FB-9FEB-50F924D8F6E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DtmSERedisBarrier", "src\DtmSERedisBarrier\DtmSERedisBarrier.csproj", "{6F18F233-3FB1-4596-94A3-544B47DE9A0B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,6 +50,10 @@ Global
 		{7823B7E5-77D4-49FB-9FEB-50F924D8F6E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7823B7E5-77D4-49FB-9FEB-50F924D8F6E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7823B7E5-77D4-49FB-9FEB-50F924D8F6E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F18F233-3FB1-4596-94A3-544B47DE9A0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F18F233-3FB1-4596-94A3-544B47DE9A0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F18F233-3FB1-4596-94A3-544B47DE9A0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F18F233-3FB1-4596-94A3-544B47DE9A0B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -59,6 +65,7 @@ Global
 		{ECAC7986-665F-40D6-BB02-32C7842618A3} = {9E0177CB-0836-4959-A672-BCC0FE6943FB}
 		{A0C2C43F-3B7C-4E09-B7F0-CA0C9CCC34D1} = {9E0177CB-0836-4959-A672-BCC0FE6943FB}
 		{7823B7E5-77D4-49FB-9FEB-50F924D8F6E0} = {A8C60387-7535-4481-A68D-8D69EF997BB8}
+		{6F18F233-3FB1-4596-94A3-544B47DE9A0B} = {A8C60387-7535-4481-A68D-8D69EF997BB8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5B86B52A-82F8-4AE2-956B-30B95BACCC27}

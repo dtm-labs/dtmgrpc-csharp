@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading.Tasks;
 
@@ -12,11 +11,6 @@ namespace DtmCommon
         private static readonly string Cancel = "cancel";
         private static readonly string Compensate = "compensate";
         private static readonly string QueryPreparedSqlFormat = "select reason from {0} where gid=@gid and branch_id=@branch_id and op=@op and barrier_id=@barrier_id";
-        private static readonly Dictionary<string, string> TypeDict = new Dictionary<string, string>()
-        {
-            { "cancel", "try" },
-            { "compensate", "action" },
-        };
 
         public BranchBarrier(string transType, string gid, string branchID, string op, DtmOptions options, DbUtils utils, ILogger logger = null)
         {
@@ -33,7 +27,7 @@ namespace DtmCommon
 
         internal DtmOptions DtmOptions { get; private set; }
 
-        internal ILogger Logger { get; private set; }
+        public ILogger Logger { get; private set; }
 
         public string TransType { get; set; }
 
@@ -62,7 +56,7 @@ namespace DtmCommon
 
             try
             {
-                var originOp = TypeDict.TryGetValue(this.Op, out var ot) ? ot : string.Empty;
+                var originOp = Constant.Barrier.OpDict.TryGetValue(this.Op, out var ot) ? ot : string.Empty;
 
                 var (originAffected, oErr) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID, originOp, bid, this.Op, tx);
                 var (currentAffected, rErr) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID, this.Op, bid, this.Op, tx);

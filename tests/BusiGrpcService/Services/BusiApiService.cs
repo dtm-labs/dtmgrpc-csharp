@@ -5,6 +5,7 @@ using MySqlConnector;
 using System.Text.Json;
 using Dapper;
 using System.Data.Common;
+using DtmSERedisBarrier;
 
 namespace BusiGrpcService.Services
 {
@@ -139,6 +140,24 @@ namespace BusiGrpcService.Services
             throw Dtmgrpc.DtmGImp.Utils.DtmError2GrpcError(ex);
         }
 
+        public override async Task<Empty> QueryPreparedRedis(BusiReq request, ServerCallContext context)
+        {
+            var barrier = _barrierFactory.CreateBranchBarrier(context);
+
+            try
+            {
+                // NOTE: this redis connection code is only for sample, don't use in production
+                var config = StackExchange.Redis.ConfigurationOptions.Parse("localhost:6379");
+                var conn = await StackExchange.Redis.ConnectionMultiplexer.ConnectAsync(config);
+                await barrier.RedisQueryPrepared(conn.GetDatabase(), 86400);
+            }
+            catch (Exception ex)
+            {
+                Dtmgrpc.DtmGImp.Utils.DtmError2GrpcError(ex);
+            }
+
+            return new Empty();
+        }
 
         private static readonly int TransOutUID = 1;
 
