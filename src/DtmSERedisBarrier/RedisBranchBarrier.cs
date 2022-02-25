@@ -31,7 +31,7 @@ namespace DtmSERedisBarrier
 
             bb.Logger?.LogDebug("RedisCheckAdjustAmount, k0={0},k1={1},k2={2},v0={3},v1={4},v2={5} lua return={6}", key, bkey1, bkey2, amount, originOp, barrierExpire, result);
 
-            if (bb.Op == Constant.TYPE_MSG && result.Equals(Constant.ResultDuplicated))
+            if (!result.IsNull && bb.Op == Constant.TYPE_MSG && ((string)result).Equals(Constant.ResultDuplicated))
                 throw new DtmDuplicatedException();
 
             if (!result.IsNull && ((string)result).Equals(Constant.ResultFailure))
