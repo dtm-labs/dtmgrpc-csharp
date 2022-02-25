@@ -140,21 +140,64 @@ namespace BusiGrpcService.Services
             throw Dtmgrpc.DtmGImp.Utils.DtmError2GrpcError(ex);
         }
 
+        public override async Task<Empty> TransInRedis(BusiReq request, ServerCallContext context)
+        {
+            _logger.LogInformation("TransInRedis req={req}", JsonSerializer.Serialize(request));
+
+            var barrier = _barrierFactory.CreateBranchBarrier(context);
+            
+            await DoSomethingWithgRpcException(async () =>
+            {
+                await barrier.RedisCheckAdjustAmount(await GetRedis(), GetRedisAccountKey(TransInUID), (int)request.Amount, 86400);
+            });
+
+            return new Empty();
+        }
+
+        public override async Task<Empty> TransInRevertRedis(BusiReq request, ServerCallContext context)
+        {
+            var barrier = _barrierFactory.CreateBranchBarrier(context);
+            
+            await DoSomethingWithgRpcException(async () =>
+            {
+                await barrier.RedisCheckAdjustAmount(await GetRedis(), GetRedisAccountKey(TransInUID), -(int)request.Amount, 86400);
+            });
+
+            return new Empty();
+        }
+
+        public override async Task<Empty> TransOutRedis(BusiReq request, ServerCallContext context)
+        {
+            var barrier = _barrierFactory.CreateBranchBarrier(context);
+            
+            await DoSomethingWithgRpcException(async () =>
+            {
+                await barrier.RedisCheckAdjustAmount(await GetRedis(), GetRedisAccountKey(TransOutUID), -(int)request.Amount, 86400);
+            });
+
+            return new Empty();
+        }
+
+        public override async Task<Empty> TransOutRevertRedis(BusiReq request, ServerCallContext context)
+        {
+            var barrier = _barrierFactory.CreateBranchBarrier(context);
+
+            await DoSomethingWithgRpcException(async () => 
+            {
+                await barrier.RedisCheckAdjustAmount(await GetRedis(), GetRedisAccountKey(TransOutUID), (int)request.Amount, 86400);
+            });
+            
+            return new Empty();
+        }
+
         public override async Task<Empty> QueryPreparedRedis(BusiReq request, ServerCallContext context)
         {
             var barrier = _barrierFactory.CreateBranchBarrier(context);
 
-            try
+            await DoSomethingWithgRpcException(async () =>
             {
-                // NOTE: this redis connection code is only for sample, don't use in production
-                var config = StackExchange.Redis.ConfigurationOptions.Parse("localhost:6379");
-                var conn = await StackExchange.Redis.ConnectionMultiplexer.ConnectAsync(config);
-                await barrier.RedisQueryPrepared(conn.GetDatabase(), 86400);
-            }
-            catch (Exception ex)
-            {
-                Dtmgrpc.DtmGImp.Utils.DtmError2GrpcError(ex);
-            }
+                await barrier.RedisQueryPrepared(await GetRedis(), 86400);
+            });
 
             return new Empty();
         }
@@ -225,6 +268,14 @@ namespace BusiGrpcService.Services
 
         private MySqlConnection GetBarrierConn() => new("Server=localhost;port=3306;User ID=root;Password=123456;Database=dtm_barrier");
 
+        private async Task<StackExchange.Redis.IDatabase> GetRedis()
+        {
+            // NOTE: this redis connection code is only for sample, don't use in production
+            var config = StackExchange.Redis.ConfigurationOptions.Parse("localhost:6379");
+            var conn = await StackExchange.Redis.ConnectionMultiplexer.ConnectAsync(config);
+            return conn.GetDatabase();
+        }
+
         private async Task SagaGrpcAdjustBalance(DbConnection conn, DbTransaction tx, int uid, int amount, string result)
         {
             _logger.LogInformation("SagaGrpcAdjustBalance uid={uid}, amount={amount}, result={result}", uid, amount, result);
@@ -238,6 +289,20 @@ namespace BusiGrpcService.Services
                 sql: "update dtm_busi.user_account set balance = balance + @balance where user_id = @user_id",
                 param: new { balance = amount, user_id = uid },
                 transaction: tx);
+        }
+
+        private string GetRedisAccountKey(int uid) => $"dtm:busi:redis-account-key-{uid}";
+
+        private async Task DoSomethingWithgRpcException(Func<Task> func)
+        {
+            try
+            {
+                await func();
+            }
+            catch (Exception ex)
+            {
+                Dtmgrpc.DtmGImp.Utils.DtmError2GrpcError(ex);
+            }
         }
     }   
 }
