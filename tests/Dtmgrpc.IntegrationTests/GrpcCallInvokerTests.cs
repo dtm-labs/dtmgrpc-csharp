@@ -27,7 +27,7 @@ namespace Dtmgrpc.IntegrationTests
             Assert.NotNull(resp.Gid);
         }
 
-        [Fact]
+        [Fact(Skip = "")]
         public async Task DtmTimoutTest()
         {
             var provider = ITTestHelper.AddDtmGrpc(1);

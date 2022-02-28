@@ -12,6 +12,10 @@ jobs:
     name: build on ${{ matrix.os }} 
     runs-on: ${{ matrix.os }}
     services:
+      redis6379:
+        image: redis
+        ports:
+          - 6379:6379
       mysql:
         image: 'mysql:8.0'
         ports:

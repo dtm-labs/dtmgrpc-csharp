@@ -25,14 +25,16 @@ namespace DtmSERedisBarrier
             }
             catch (System.Exception ex)
             {
-                bb.Logger?.LogWarning(ex, "RedisCheckAdjustAmount lua return :{0}", result);
+                bb.Logger?.LogWarning(ex, "RedisCheckAdjustAmount lua error");
                 throw;
             }
 
-            if (result.IsNull && bb.Op == Constant.TYPE_MSG && result.Equals(Constant.ResultDuplicated))
+            bb.Logger?.LogDebug("RedisCheckAdjustAmount, k0={0},k1={1},k2={2},v0={3},v1={4},v2={5} lua return={6}", key, bkey1, bkey2, amount, originOp, barrierExpire, result);
+
+            if (!result.IsNull && bb.Op == Constant.TYPE_MSG && ((string)result).Equals(Constant.ResultDuplicated))
                 throw new DtmDuplicatedException();
 
-            if (result.IsNull && result.Equals(Constant.ResultFailure))
+            if (!result.IsNull && ((string)result).Equals(Constant.ResultFailure))
                 throw new DtmFailureException();
         }
 
@@ -49,11 +51,13 @@ namespace DtmSERedisBarrier
             }
             catch (System.Exception ex)
             {
-                bb.Logger?.LogWarning(ex, "RedisQueryPrepared lua return :{0}", result);
+                bb.Logger?.LogWarning(ex, "RedisQueryPrepared lua error");
                 throw;
             }
 
-            if (result.IsNull && result.Equals(Constant.ResultFailure))
+            bb.Logger?.LogDebug("RedisQueryPrepared, key={0} lua return={1}", bkey1, result);
+
+            if (!result.IsNull && ((string)result).Equals(Constant.ResultFailure))
                 throw new DtmFailureException();
         }
     }
