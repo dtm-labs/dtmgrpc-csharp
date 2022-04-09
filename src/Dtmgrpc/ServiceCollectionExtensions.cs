@@ -34,14 +34,14 @@ namespace Dtmgrpc
             services.TryAddSingleton<Driver.IDtmDriver, Driver.DefaultDtmDriver>();
 
             // trans releate
-            services.AddSingleton<IDtmTransFactory, DtmTransFactory>();
-            services.AddSingleton<IDtmgRPCClient, DtmgRPCClient>();
-            services.AddSingleton<TccGlobalTransaction>();
+            services.TryAddSingleton<IDtmTransFactory, DtmTransFactory>();
+            services.TryAddSingleton<IDtmgRPCClient, DtmgRPCClient>();
+            services.TryAddSingleton<TccGlobalTransaction>();
 
             DtmCommon.ServiceCollectionExtensions.AddDtmCommon(services);
 
             // barrier factory
-            services.AddSingleton<IBranchBarrierFactory, DefaultBranchBarrierFactory>();
+            services.TryAddSingleton<IBranchBarrierFactory, DefaultBranchBarrierFactory>();
 
             return services;
         }

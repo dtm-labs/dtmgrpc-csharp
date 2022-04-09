@@ -47,12 +47,7 @@ namespace DtmCommon
             // check the connection state
             if (db.State != System.Data.ConnectionState.Open) await db.OpenAsync();
 
-            // All should using async method, but netstandard2.0 do not support.
-#if NETSTANDARD2_0
-            var tx = db.BeginTransaction();
-#else
             var tx = await db.BeginTransactionAsync();
-#endif
 
             try
             {
@@ -72,12 +67,7 @@ namespace DtmCommon
                 if (isNullCompensation || isDuplicateOrPend)
                 {
                     Logger?.LogInformation("Will not exec busiCall, isNullCompensation={isNullCompensation}, isDuplicateOrPend={isDuplicateOrPend}", isNullCompensation, isDuplicateOrPend);
-#if NETSTANDARD2_0
-                    tx.Commit();
-#else
                     await tx.CommitAsync();
-#endif
-
                     return;
                 }
 
@@ -85,26 +75,18 @@ namespace DtmCommon
                 {
                     await busiCall.Invoke(tx);
                 }
-                catch 
+                catch
                 {
                     throw;
                 }
 
-#if NETSTANDARD2_0
-                tx.Commit();
-#else
                 await tx.CommitAsync();
-#endif
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Call error, gid={gid}, trans_type={trans_type}", this.Gid, this.TransType);
 
-#if NETSTANDARD2_0
-                tx.Rollback();
-#else
                 await tx.RollbackAsync();
-#endif
 
                 throw;
             }
