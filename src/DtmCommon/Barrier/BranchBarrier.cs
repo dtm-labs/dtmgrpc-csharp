@@ -138,7 +138,7 @@ namespace DtmCommon
         /// <param name="op"></param>
         /// <param name="originAffected"></param>
         /// <returns></returns>
-        private bool IsNullCompensation(string op, int originAffected)
+        internal bool IsNullCompensation(string op, int originAffected)
             => (op.Equals(Cancel) || op.Equals(Compensate)) && originAffected > 0;
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace DtmCommon
         /// </summary>
         /// <param name="currentAffected"></param>
         /// <returns></returns>
-        private bool IsDuplicateOrPend(int currentAffected)
+        internal bool IsDuplicateOrPend(int currentAffected)
             => currentAffected == 0;
 
         /// <summary>
@@ -156,7 +156,7 @@ namespace DtmCommon
         /// <param name="op">op</param>
         /// <param name="currentAffected">currentAffected</param>
         /// <returns></returns>
-        private bool IsMsgRejected(string err, string op, int currentAffected)
+        internal bool IsMsgRejected(string err, string op, int currentAffected)
             => string.IsNullOrWhiteSpace(err) && op.Equals(Constant.TYPE_MSG) && currentAffected == 0;
 
         public bool IsInValid()
