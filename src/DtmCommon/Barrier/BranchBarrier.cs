@@ -61,6 +61,8 @@ namespace DtmCommon
                 if (IsMsgRejected(rErr, this.Op, currentAffected))
                     throw new DtmDuplicatedException();
 
+                if (string.IsNullOrWhiteSpace(rErr)) rErr = oErr;
+
                 var isNullCompensation = IsNullCompensation(this.Op, originAffected);
                 var isDuplicateOrPend = IsDuplicateOrPend(currentAffected);
 
@@ -73,7 +75,10 @@ namespace DtmCommon
 
                 try
                 {
-                    await busiCall.Invoke(tx);
+                    if(string.IsNullOrWhiteSpace(rErr))
+                    {
+                        await busiCall.Invoke(tx);
+                    }
                 }
                 catch
                 {
