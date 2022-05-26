@@ -46,7 +46,9 @@ namespace Dtmgrpc.Tests
 
             Assert.IsType<PostgresDBSpecial>(special);
             Assert.Equal("begin", special.GetXaSQL("start", "xa1"));
+            Assert.Equal(string.Empty, special.GetXaSQL("aa", "bb"));
             Assert.Equal("insert into a(f) values(@f) on conflict ON CONSTRAINT c do nothing", special.GetInsertIgnoreTemplate("a(f) values(@f)", "c"));
+            Assert.Equal("insert into a(f) values(@f)", special.GetPlaceHoldSQL("insert into a(f) values(@f)"));
         }
 
         [Fact]
@@ -68,6 +70,7 @@ namespace Dtmgrpc.Tests
 
             Assert.IsType<SqlServerDBSpecial>(special);
             Assert.Equal("insert into a(f) values(@f)", special.GetInsertIgnoreTemplate("a(f) values(@f)", "c"));
+            Assert.Equal("insert into a(f) values(@f)", special.GetPlaceHoldSQL("insert into a(f) values(@f)"));
             Assert.Throws<DtmException>(() => special.GetXaSQL("", ""));
         }
 

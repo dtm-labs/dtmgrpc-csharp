@@ -26,16 +26,24 @@ namespace Dtmgrpc.Tests
                 .Add(string.Concat(busi, "/TransOut"), string.Concat(busi, "/TransOutRevert"), req)
                 .Add(string.Concat(busi, "/TransIn"), string.Concat(busi, "/TransInRevert"), req)
                 .Add(string.Concat(busi, "/TransIn"), string.Concat(busi, "/TransInRevert"), req)
+                .AddBranchOrder(3, new List<int> { 1, 2 })
                 .EnableWaitResult()
+                .EnableConcurrent()
                 .SetRetryInterval(10)
                 .SetTimeoutToFail(100)
                 .SetBranchHeaders(new Dictionary<string, string>
                  {
                      { "bh1", "123" },
                      { "bh2", "456" },
-                 });
+                 })
+                .SetPassthroughHeaders(new List<string> { "bh1" });
 
             await saga.Submit();
+
+            var tb = saga.GetTransBase();
+            Assert.NotNull(tb.CustomData);
+            Assert.Equal(10, tb.RetryInterval);
+            Assert.Equal(100, tb.TimeoutToFail);
 
             Assert.True(true);
         }

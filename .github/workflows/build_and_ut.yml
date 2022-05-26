@@ -51,4 +51,25 @@ jobs:
 
     - name: Run tests on net6.0
       run: |
-        dotnet test --framework=net6.0 tests/Dtmgrpc.Tests/Dtmgrpc.Tests.csproj
+        dotnet test --framework=net6.0 tests/Dtmgrpc.Tests/Dtmgrpc.Tests.csproj --collect:"XPlat Code Coverage"
+
+    - name: Prepare Codecov
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+
+        reportgenerator -reports:"${{ github.workspace }}/tests/Dtmgrpc.Tests/TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"${{ github.workspace }}/coverage" \
+            -classfilters:-*dtmgpb.*  \
+            -reporttypes:Cobertura
+
+        ls ${{ github.workspace }}/coverage/
+    - name: Upload coverage to Codecov
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
+        files: ${{ github.workspace }}/coverage/Cobertura.xml
+        name: codecov-umbrella
+        verbose: true    
