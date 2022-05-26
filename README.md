@@ -7,7 +7,7 @@ English | [简体中文](./README-cn.md)
 
 It has supported distributed transaction patterns of Saga pattern, TCC pattern and 2-phase message pattern.
 
-![Build_And_UnitTest](https://github.com/catcherwong/dtmgrpc-csharp/actions/workflows/build_and_ut.yml/badge.svg) ![Build_And_IntegrationTests](https://github.com/catcherwong/dtmgrpc-csharp/actions/workflows/build_and_it.yml/badge.svg)
+![Build_And_UnitTest](https://github.com/catcherwong/dtmgrpc-csharp/actions/workflows/build_and_ut.yml/badge.svg) ![Build_And_IntegrationTests](https://github.com/catcherwong/dtmgrpc-csharp/actions/workflows/build_and_it.yml/badge.svg) [![codecov](https://codecov.io/gh/dtm-labs/dtmgrpc-csharp/branch/main/graph/badge.svg?token=BMVU39PSH4)](https://codecov.io/gh/dtm-labs/dtmgrpc-csharp)
 
 ![](https://img.shields.io/nuget/v/Dtmgrpc.svg)  ![](https://img.shields.io/nuget/vpre/Dtmgrpc.svg) ![](https://img.shields.io/nuget/dt/Dtmgrpc) ![](https://img.shields.io/github/license/catcherwong/dtmgrpc-csharp)
 
