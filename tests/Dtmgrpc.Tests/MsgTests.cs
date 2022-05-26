@@ -55,12 +55,30 @@ namespace Dtmgrpc.Tests
                 {
                     { "bh1", "123" },
                     { "bh2", "456" },
-                });
+                })
+               .SetPassthroughHeaders(new List<string> { "bh1" });
 
             await msg.Prepare(busi + "/query");
             await msg.Submit();
 
             Assert.True(true);
+        }
+
+        [Fact]
+        public async void DoAndSubmit_Should_Throw_Exception_When_Transbase_InValid()
+        {
+            var dtmClient = new Mock<IDtmgRPCClient>();
+            var bbFactory = new Mock<IBranchBarrierFactory>();
+
+            bbFactory.Setup(x => x.CreateBranchBarrier(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null))
+                .Returns(new BranchBarrier("", "", "", "", null, null));
+
+            var gid = string.Empty;
+            var msg = new MsgGrpc(dtmClient.Object, bbFactory.Object, "", gid);
+
+            var req = new Empty();
+            msg.Add(busi + "/TransOut", req);
+            await Assert.ThrowsAsync<DtmException>(async () => await msg.DoAndSubmit(busi + "/query", x => Task.CompletedTask));
         }
 
         [Fact]
