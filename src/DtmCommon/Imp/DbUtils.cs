@@ -17,13 +17,10 @@ namespace DtmCommon
             _specialDelegate = specialDelegate;
         }
 
-        public async Task<(int, string)> InsertBarrier(DbConnection db, string transType, string gid, string branchID, string op, string barrierID, string reason, DbTransaction tx = null)
+        public async Task<(int, Exception)> InsertBarrier(DbConnection db, string transType, string gid, string branchID, string op, string barrierID, string reason, DbTransaction tx = null)
         {
-            if (db == null) return (-1, string.Empty);
-            if (string.IsNullOrWhiteSpace(op)) return (0, string.Empty);
-
-            int result = 0;
-            string err = string.Empty;
+            if (db == null) return (-1, null);
+            if (string.IsNullOrWhiteSpace(op)) return (0, null);
 
             try
             {
@@ -32,17 +29,17 @@ namespace DtmCommon
 
                 sql = _specialDelegate.GetDbSpecial().GetPlaceHoldSQL(sql);
 
-                result = await db.ExecuteAsync(
+                var affected = await db.ExecuteAsync(
                     sql,
                     new { trans_type = transType, gid = gid, branch_id = branchID, op = op, barrier_id = barrierID, reason = reason },
                     transaction: tx);
+
+                return (affected, null);
             }
             catch (Exception ex)
             {
-                err = ex.Message;
+                return (0, ex);
             }
-
-            return (result, err);
         }
     }
 

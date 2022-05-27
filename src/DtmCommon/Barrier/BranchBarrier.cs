@@ -53,15 +53,19 @@ namespace DtmCommon
             {
                 var originOp = Constant.Barrier.OpDict.TryGetValue(this.Op, out var ot) ? ot : string.Empty;
 
-                var (originAffected, oErr) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID, originOp, bid, this.Op, tx);
-                var (currentAffected, rErr) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID, this.Op, bid, this.Op, tx);
+                var (originAffected, oEx) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID, originOp, bid, this.Op, tx);
+                var (currentAffected, rEx) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID, this.Op, bid, this.Op, tx);
 
                 Logger?.LogDebug("originAffected: {originAffected} currentAffected: {currentAffected}", originAffected, currentAffected);
 
-                if (IsMsgRejected(rErr, this.Op, currentAffected))
+                if (IsMsgRejected(rEx?.Message, this.Op, currentAffected))
                     throw new DtmDuplicatedException();
 
-                if (string.IsNullOrWhiteSpace(rErr)) rErr = oErr;
+                if (oEx != null || rEx != null)
+                {
+                    await tx.RollbackAsync();
+                    throw oEx ?? rEx;
+                }
 
                 var isNullCompensation = IsNullCompensation(this.Op, originAffected);
                 var isDuplicateOrPend = IsDuplicateOrPend(currentAffected);
@@ -73,17 +77,7 @@ namespace DtmCommon
                     return;
                 }
 
-                try
-                {
-                    if(string.IsNullOrWhiteSpace(rErr))
-                    {
-                        await busiCall.Invoke(tx);
-                    }
-                }
-                catch
-                {
-                    throw;
-                }
+                await busiCall.Invoke(tx);
 
                 await tx.CommitAsync();
             }
