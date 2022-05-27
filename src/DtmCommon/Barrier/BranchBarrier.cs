@@ -63,7 +63,6 @@ namespace DtmCommon
 
                 if (oEx != null || rEx != null)
                 {
-                    await tx.RollbackAsync();
                     throw oEx ?? rEx;
                 }
 
