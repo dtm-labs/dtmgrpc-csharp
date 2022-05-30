@@ -1,6 +1,7 @@
-using Dapper;
+﻿using Dapper;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
 
@@ -48,58 +49,47 @@ namespace DtmCommon
             if (db.State != System.Data.ConnectionState.Open) await db.OpenAsync();
 
             var tx = await db.BeginTransactionAsync();
-            
+
             try
             {
                 var originOp = Constant.Barrier.OpDict.TryGetValue(this.Op, out var ot) ? ot : string.Empty;
-                var (originAffected, oErr) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID,
-                    originOp, bid, this.Op, tx);
-                
-                // when fatal error occured,db state will be closed
-                if (oErr != null || db.State != System.Data.ConnectionState.Open)
+
+                var (originAffected, oEx) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID, originOp, bid, this.Op, tx);
+                if (oEx != null || db.State != ConnectionState.Open)
                 {
                     throw new DtmOngingException();
                 }
-                var (currentAffected, rErr) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID,
-                    this.Op, bid, this.Op, tx);
-
-                if (rErr != null || db.State != System.Data.ConnectionState.Open)
+                var (currentAffected, rEx) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID, this.Op, bid, this.Op, tx);
+                if (rEx != null || db.State != ConnectionState.Open)
                 {
                     throw new DtmOngingException();
                 }
+                Logger?.LogDebug("originAffected: {originAffected} currentAffected: {currentAffected}", originAffected, currentAffected);
 
-                Logger?.LogDebug("originAffected: {originAffected} currentAffected: {currentAffected}", originAffected,
-                    currentAffected);
-
-                if (IsMsgRejected(rErr?.Message, this.Op, currentAffected))
+                if (IsMsgRejected(rEx?.Message, this.Op, currentAffected))
                     throw new DtmDuplicatedException();
+
+                if (oEx != null || rEx != null)
+                {
+                    throw oEx ?? rEx;
+                }
 
                 var isNullCompensation = IsNullCompensation(this.Op, originAffected);
                 var isDuplicateOrPend = IsDuplicateOrPend(currentAffected);
 
                 if (isNullCompensation || isDuplicateOrPend)
                 {
-                    Logger?.LogInformation(
-                        "Will not exec busiCall, isNullCompensation={isNullCompensation}, isDuplicateOrPend={isDuplicateOrPend}",
-                        isNullCompensation, isDuplicateOrPend);
+                    Logger?.LogInformation("Will not exec busiCall, isNullCompensation={isNullCompensation}, isDuplicateOrPend={isDuplicateOrPend}", isNullCompensation, isDuplicateOrPend);
                     await tx.CommitAsync();
                     return;
                 }
-                
-                try
-                {
-                    await busiCall.Invoke(tx);
-                }
-                catch
-                {
-                    throw;
-                }
+
+                await busiCall.Invoke(tx);
                 await tx.CommitAsync();
             }
             catch (DtmException e)
             {
-                Logger?.LogInformation($"dtm known {e}, gid={this.Gid}, trans_type={this.TransType}");
-                
+                Logger?.LogInformation($"dtm known {e.Message}, gid={this.Gid}, trans_type={this.TransType}");
                 throw;
             }
             catch (Exception ex)
