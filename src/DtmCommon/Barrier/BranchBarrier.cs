@@ -54,17 +54,16 @@ namespace DtmCommon
                 var originOp = Constant.Barrier.OpDict.TryGetValue(this.Op, out var ot) ? ot : string.Empty;
                 var (originAffected, oErr) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID,
                     originOp, bid, this.Op, tx);
-
+                
                 // when fatal error occured,db state will be closed
-                if (!string.IsNullOrEmpty(oErr) || db.State != System.Data.ConnectionState.Open)
+                if (oErr != null || db.State != System.Data.ConnectionState.Open)
                 {
                     throw new DtmOngingException();
                 }
-
                 var (currentAffected, rErr) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID,
                     this.Op, bid, this.Op, tx);
 
-                if (!string.IsNullOrEmpty(rErr) || db.State != System.Data.ConnectionState.Open)
+                if (rErr != null || db.State != System.Data.ConnectionState.Open)
                 {
                     throw new DtmOngingException();
                 }
@@ -72,9 +71,8 @@ namespace DtmCommon
                 Logger?.LogDebug("originAffected: {originAffected} currentAffected: {currentAffected}", originAffected,
                     currentAffected);
 
-                if (IsMsgRejected(rErr, this.Op, currentAffected))
+                if (IsMsgRejected(rErr?.Message, this.Op, currentAffected))
                     throw new DtmDuplicatedException();
-                
 
                 var isNullCompensation = IsNullCompensation(this.Op, originAffected);
                 var isDuplicateOrPend = IsDuplicateOrPend(currentAffected);
@@ -87,7 +85,7 @@ namespace DtmCommon
                     await tx.CommitAsync();
                     return;
                 }
-
+                
                 try
                 {
                     await busiCall.Invoke(tx);
@@ -96,7 +94,6 @@ namespace DtmCommon
                 {
                     throw;
                 }
-
                 await tx.CommitAsync();
             }
             catch (DtmException e)

@@ -195,5 +195,23 @@ namespace Dtmgrpc.Tests
 
             Assert.Throws<DtmException>(() => _factory.CreateBranchBarrier(context));
         }
+        
+        [Fact]
+        public async void Should_Throw_If_Sql_Execution_Failed()
+        {
+            const string dbWrongMessage = "Something wrong with the DB...";
+            
+            var branchBarrier = _factory.CreateBranchBarrier("msg", "gid", "00", "msg");
+
+            var conn = GetDbConnection();
+
+            conn.Mocks.When(cmd => cmd.CommandText.Contains("insert", StringComparison.Ordinal))
+                .ThrowsException(new Exception(dbWrongMessage));
+
+            var ex = await Assert.ThrowsAsync<Exception>(() =>
+                branchBarrier.Call(conn, transaction => Task.CompletedTask));
+            
+            Assert.Equal(dbWrongMessage, ex.Message);
+        }
     }
 }
