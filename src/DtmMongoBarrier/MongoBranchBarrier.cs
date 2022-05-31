@@ -23,13 +23,18 @@ namespace DtmMongoBarrier
             {
                 var originOp = Constant.Barrier.OpDict.TryGetValue(bb.Op, out var ot) ? ot : string.Empty;
 
-                var (originAffected, oErr) = await MongoInsertBarrier(bb, session, bb.BranchID, originOp, bid, bb.Op);
-                var (currentAffected, rErr) = await MongoInsertBarrier(bb, session, bb.BranchID, bb.Op, bid, bb.Op);
+                var (originAffected, oEx) = await MongoInsertBarrier(bb, session, bb.BranchID, originOp, bid, bb.Op);
+                var (currentAffected, rEx) = await MongoInsertBarrier(bb, session, bb.BranchID, bb.Op, bid, bb.Op);
 
                 bb?.Logger?.LogDebug("mongo originAffected: {originAffected} currentAffected: {currentAffected}", originAffected, currentAffected);
 
-                if (bb.IsMsgRejected(rErr, bb.Op, currentAffected))
+                if (bb.IsMsgRejected(rEx?.Message, bb.Op, currentAffected))
                     throw new DtmDuplicatedException();
+
+                if (oEx != null || rEx != null)
+                {
+                    throw oEx ?? rEx;
+                }
 
                 var isNullCompensation = bb.IsNullCompensation(bb.Op, originAffected);
                 var isDuplicateOrPend = bb.IsDuplicateOrPend(currentAffected);
@@ -41,14 +46,7 @@ namespace DtmMongoBarrier
                     return;
                 }
 
-                try
-                {
-                    await busiCall.Invoke(session);
-                }
-                catch
-                {
-                    throw;
-                }
+                await busiCall.Invoke(session);
 
                 await session.CommitTransactionAsync();
             }
@@ -108,9 +106,9 @@ namespace DtmMongoBarrier
             return string.Empty;
         }
 
-        private static async Task<(int, string)> MongoInsertBarrier(BranchBarrier bb, IClientSessionHandle session, string branchId, string op, string bid, string reason)
+        private static async Task<(int, Exception)> MongoInsertBarrier(BranchBarrier bb, IClientSessionHandle session, string branchId, string op, string bid, string reason)
         {
-            var err = string.Empty;
+            Exception err = null;
             if (session == null) return (-1, err);
             if (string.IsNullOrWhiteSpace(op)) return (0, err);
 
@@ -127,7 +125,7 @@ namespace DtmMongoBarrier
             }
             catch (Exception ex)
             {
-                err = ex.Message;
+                err = ex;
                 bb?.Logger?.LogDebug(ex, "Find document exception here, gid={gid}, branchId={branchId}, op={op}, bid={bid}", bb.Gid, branchId, op, bid);
             }
 
@@ -147,7 +145,7 @@ namespace DtmMongoBarrier
                 }
                 catch (Exception ex)
                 {
-                    err = ex.Message;
+                    err = ex;
                 }
 
                 return (1, err);
