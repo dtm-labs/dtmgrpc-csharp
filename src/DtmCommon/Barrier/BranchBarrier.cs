@@ -57,12 +57,12 @@ namespace DtmCommon
                 var (originAffected, oEx) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID, originOp, bid, this.Op, tx);
                 if (oEx != null || db.State != ConnectionState.Open)
                 {
-                    throw new DtmOngingException();
+                    throw new DtmOngingException(oEx?.Message);
                 }
                 var (currentAffected, rEx) = await DbUtils.InsertBarrier(db, this.TransType, this.Gid, this.BranchID, this.Op, bid, this.Op, tx);
                 if (rEx != null || db.State != ConnectionState.Open)
                 {
-                    throw new DtmOngingException();
+                    throw new DtmOngingException(rEx?.Message);
                 }
                 Logger?.LogDebug("originAffected: {originAffected} currentAffected: {currentAffected}", originAffected, currentAffected);
 

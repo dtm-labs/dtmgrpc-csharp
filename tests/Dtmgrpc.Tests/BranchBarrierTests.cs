@@ -208,7 +208,7 @@ namespace Dtmgrpc.Tests
             conn.Mocks.When(cmd => cmd.CommandText.Contains("insert", StringComparison.Ordinal))
                 .ThrowsException(new Exception(dbWrongMessage));
 
-            var ex = await Assert.ThrowsAsync<Exception>(() =>
+            var ex = await Assert.ThrowsAnyAsync<Exception>(() =>
                 branchBarrier.Call(conn, transaction => Task.CompletedTask));
             
             Assert.Equal(dbWrongMessage, ex.Message);
