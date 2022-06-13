@@ -81,10 +81,14 @@ namespace Dtmgrpc.DtmGImp
         }
 
         internal static string GetWithoutPrefixgRPCUrl(this string url)
-        { 
+        {
+#if NETSTANDARD2_0
+            return url?.TrimEnd(Slash)?.Replace(HTTP, string.Empty)?.Replace(HTTPS, string.Empty) ?? string.Empty;
+#else
             return url?.TrimEnd(Slash)
                 .Replace(HTTP, string.Empty, StringComparison.OrdinalIgnoreCase)
-                .Replace(HTTPS, string.Empty, StringComparison.Ordinal) ?? string.Empty;
+                .Replace(HTTPS, string.Empty, StringComparison.OrdinalIgnoreCase) ?? string.Empty;
+#endif
         }
 
         private static readonly System.Collections.Generic.Dictionary<string, Exception> StrExceptions = new System.Collections.Generic.Dictionary<string, Exception>

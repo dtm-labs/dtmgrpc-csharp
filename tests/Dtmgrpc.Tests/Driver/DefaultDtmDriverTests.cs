@@ -40,6 +40,26 @@ namespace Dtmgrpc.Tests.Driver
         }
 
         [Fact]
+        public void ParseServerMethod_Should_Fail_When_Url_IsNull()
+        {
+            var d = new DefaultDtmDriver();
+
+            var (server, serviceName, method, error) = d.ParseServerMethod(null);
+
+            Assert.Empty(server);
+            Assert.Empty(serviceName);
+            Assert.Empty(method);
+            Assert.NotEmpty(error);
+        }
+
+        [Fact]
+        public void GetName_Should_Succeed()
+        {
+            var d = new DefaultDtmDriver();
+            Assert.Equal("default", d.GetName());
+        }
+
+        [Fact]
         public void AddDtmGrpc_Should_Get_Default_Driver()
         {
             var dtm = "http://localhost:36790";

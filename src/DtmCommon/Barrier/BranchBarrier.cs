@@ -50,7 +50,11 @@ namespace DtmCommon
             // check the connection state
             if (db.State != System.Data.ConnectionState.Open) await db.OpenAsync();
 
+#if NETSTANDARD2_0
+            var tx = db.BeginTransaction();
+#else
             var tx = await db.BeginTransactionAsync();
+#endif
 
             try
             {
@@ -82,12 +86,20 @@ namespace DtmCommon
                 if (isNullCompensation || isDuplicateOrPend)
                 {
                     Logger?.LogInformation("Will not exec busiCall, isNullCompensation={isNullCompensation}, isDuplicateOrPend={isDuplicateOrPend}", isNullCompensation, isDuplicateOrPend);
+#if NETSTANDARD2_0
+                    tx.Commit();
+#else
                     await tx.CommitAsync();
+#endif
                     return;
                 }
 
                 await busiCall.Invoke(tx);
+#if NETSTANDARD2_0
+                tx.Commit();
+#else
                 await tx.CommitAsync();
+#endif
             }
             catch (DtmException e)
             {
@@ -97,8 +109,12 @@ namespace DtmCommon
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Call error, gid={gid}, trans_type={trans_type}", this.Gid, this.TransType);
-
+                
+#if NETSTANDARD2_0
+                tx.Rollback();
+#else
                 await tx.RollbackAsync();
+#endif
 
                 throw;
             }
